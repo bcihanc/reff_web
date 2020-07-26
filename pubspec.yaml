@@ -1,0 +1,33 @@
+name: reff_web
+description: A new Flutter project.
+
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.7.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  reff_shared:
+    path: ../reff_shared
+  firebase_core: ^0.4.5
+  firebase_auth: ^0.16.1
+  cloud_firestore: ^0.13.7
+  logging: ^0.11.4
+  get_it: ^4.0.4
+  provider: ^4.3.1
+  intl: ^0.16.1
+  google_fonts: ^1.1.0
+  freezed_annotation: ^0.11.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  build_runner: ^1.10.0
+  json_serializable: ^3.3.0
+  freezed: ^0.11.4
+
+flutter:
+  uses-material-design: true
