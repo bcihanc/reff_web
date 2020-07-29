@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:reff_shared/core/models/models.dart';
+import 'package:reff_shared/core/services/api.dart';
 import 'package:reff_web/core/locator.dart';
 import 'package:reff_web/core/models/Unions.dart';
-import 'package:reff_web/core/services/firebase_api.dart';
 
 class QuestionProvider with ChangeNotifier {
   final _logger = Logger("QuestionProvider");
-  final _firestore = locator<FirebaseApi>();
+  final api = locator<BaseApi>();
 
   QuestionExistsState questionExistsState;
 
@@ -15,21 +15,21 @@ class QuestionProvider with ChangeNotifier {
   final contentFormKey = GlobalKey<FormState>();
   final imageUrlFormKey = GlobalKey<FormState>();
 
-  QuestionModel questionModel;
+  QuestionModel question;
   List<AnswerModel> answers;
 
   bool isBusy;
 
-  static final questionModelForNew =
+  static final questionForNew =
       QuestionModel(header: "", timeStamp: DateTime.now());
 
   static final answersForNew = <AnswerModel>[];
 
-  QuestionProvider({QuestionModel questionModel, List<AnswerModel> answers}) {
-    this.questionModel = questionModel ?? questionModelForNew;
+  QuestionProvider({QuestionModel question, List<AnswerModel> answers}) {
+    this.question = question ?? questionForNew;
     this.answers = answers ?? answersForNew;
 
-    this.questionExistsState = (questionModel != null && answers != null)
+    this.questionExistsState = (question != null && answers != null)
         ? QuestionExistsState.exsist()
         : QuestionExistsState.notExsist();
 
@@ -56,44 +56,42 @@ class QuestionProvider with ChangeNotifier {
   }
 
   void updateDate(DateTime dateTime) {
-    this.questionModel = this.questionModel.copyWith.call(timeStamp: dateTime);
+    this.question = this.question.copyWith.call(timeStamp: dateTime);
     notifyListeners();
     _logger.info("changeDate | tarih değişti");
   }
 
   void updateImageUrl(String imageUrl) {
-    this.questionModel = this.questionModel.copyWith.call(imageUrl: imageUrl);
+    this.question = this.question.copyWith.call(imageUrl: imageUrl);
     notifyListeners(); // resim için build çalışması şart
     _logger.info("changeImageUrl | imageUrl değişti");
   }
 
   void updateHeader(String header) {
-    this.questionModel = this.questionModel.copyWith.call(header: header);
+    this.question = this.question.copyWith.call(header: header);
     _logger.info("changeHeader | header değişti");
   }
 
   void updateContent(String content) {
-    this.questionModel = this.questionModel.copyWith.call(content: content);
+    this.question = this.question.copyWith.call(content: content);
     _logger.info("changeContent | content değişti");
   }
 
-  void addAnswer(AnswerModel answerModel) {
-    this.answers.add(answerModel);
+  void addAnswer(AnswerModel answer) {
+    this.answers.add(answer);
     notifyListeners();
     _logger.info("addAnswer | yeni tercih eklendi");
   }
 
-  void removeAnswer(AnswerModel answerModel) {
-    if (this.answers.contains(answerModel)) {
-      final result = this.answers.remove(answerModel);
+  void removeAnswer(AnswerModel answer) {
+    if (this.answers.contains(answer)) {
+      final result = this.answers.remove(answer);
 
-      if (answerModel.id != null) {
-        final willRemoveAnswerID = this
-            .questionModel
-            .answers
-            .firstWhere((element) => element == answerModel.id);
+      if (answer.id != null) {
+        final willRemoveAnswerID =
+            this.question.answers.firstWhere((element) => element == answer.id);
 
-        this.questionModel.answers.remove(willRemoveAnswerID);
+        this.question.answers.remove(willRemoveAnswerID);
       }
 
       result
@@ -123,11 +121,11 @@ class QuestionProvider with ChangeNotifier {
       await this.questionExistsState.when(
         // yeni bir question kaydedilirken
         notExsist: () async {
-          final ids = await _firestore.addAnswersToFirebase(answers);
+          final ids = await api.answer.add(answers);
           _logger.info('saveAll : ${ids.length} adet tercih kaydedildi');
 
-          final questionModel = this.questionModel.copyWith.call(answers: ids);
-          final questionID = await _firestore.addQuestion(questionModel);
+          final question = this.question.copyWith.call(answers: ids);
+          final questionID = await api.question.add(question);
           _logger.info('saveAll : yeni bir soru yaratıldı $questionID');
         },
 
@@ -137,20 +135,18 @@ class QuestionProvider with ChangeNotifier {
 
           for (final answer in this.answers) {
             if (answer.id != null) {
-              await _firestore.updateAnswer(answer.id, answer);
-              await _firestore.updateQuestion(
-                  this.questionModel.id, this.questionModel);
+              await api.answer.update(answer.id, answer);
+              await api.question.update(this.question.id, this.question);
             } else {
               newAnswers.add(answer);
               this.answers.remove(answer);
             }
             if (newAnswers.isNotEmpty) {
-              final ids = await _firestore.addAnswersToFirebase(newAnswers);
-              this.questionModel.answers.addAll(ids);
+              final ids = await api.answer.add(newAnswers);
+              this.question.answers.addAll(ids);
             }
 
-            await _firestore.updateQuestion(
-                this.questionModel.id, this.questionModel);
+            await api.question.update(this.question.id, this.question);
           }
           _logger.info('updateAnswerToFirebase tercihler güncellendi');
         },

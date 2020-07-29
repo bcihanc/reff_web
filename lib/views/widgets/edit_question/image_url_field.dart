@@ -56,8 +56,8 @@ class _ImageUrlFieldState extends State<ImageUrlField> {
               ),
             ),
             VerticalDivider(),
-            (provider.questionModel.imageUrl == null ||
-                    provider.questionModel.imageUrl.isEmpty)
+            (provider.question.imageUrl == null ||
+                    provider.question.imageUrl.isEmpty)
                 ? CustomCard(
                     child: Container(
                       height: 100,
@@ -68,7 +68,7 @@ class _ImageUrlFieldState extends State<ImageUrlField> {
                   )
                 : Card(
                     child: Image.network(
-                      provider.questionModel.imageUrl ??
+                      provider.question.imageUrl ??
                           "https://via.placeholder.com/100",
                       height: 100,
                       width: 100,

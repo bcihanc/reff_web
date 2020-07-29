@@ -34,7 +34,7 @@ class _ContentFieldState extends State<ContentField> {
       child: Form(
         key: provider.contentFormKey,
         child: TextFormField(
-            controller: _controller..text = provider.questionModel.content,
+            controller: _controller..text = provider.question.content,
             onChanged: (value) {
               if (value != null && value.isNotEmpty) {
                 provider.updateContent(value);

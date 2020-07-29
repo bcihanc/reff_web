@@ -3,23 +3,23 @@ import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_web/styles.dart';
 
 class AnswerEditDialog extends StatefulWidget {
-  final AnswerModel answerModel;
+  final AnswerModel answer;
 
-  const AnswerEditDialog({Key key, this.answerModel}) : super(key: key);
+  const AnswerEditDialog({Key key, this.answer}) : super(key: key);
 
   @override
   _AnswerEditDialogState createState() => _AnswerEditDialogState();
 }
 
 class _AnswerEditDialogState extends State<AnswerEditDialog> {
-  AnswerModel _answerModel;
+  AnswerModel _answer;
   TextEditingController _contentController;
 
   @override
   void initState() {
     super.initState();
-    _answerModel = widget.answerModel ?? AnswerModel(content: "");
-    _contentController = TextEditingController(text: _answerModel.content);
+    _answer = widget.answer ?? AnswerModel(content: "");
+    _contentController = TextEditingController(text: _answer.content);
   }
 
   @override
@@ -44,8 +44,7 @@ class _AnswerEditDialogState extends State<AnswerEditDialog> {
                   autofocus: true,
                   onChanged: (value) {
                     setState(() {
-                      this._answerModel =
-                          this._answerModel.copyWith.call(content: value);
+                      this._answer = this._answer.copyWith.call(content: value);
                     });
                   },
                   decoration: InputDecoration(
@@ -61,7 +60,7 @@ class _AnswerEditDialogState extends State<AnswerEditDialog> {
                 child: RaisedButton.icon(
                     color: Colors.blueGrey,
                     onPressed: () {
-                      Navigator.pop(context, _answerModel);
+                      Navigator.pop(context, _answer);
                     },
                     icon: Icon(Icons.add),
                     label: Text('ekle')),

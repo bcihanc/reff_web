@@ -62,7 +62,7 @@ class AnswerList extends StatelessWidget {
                                               context: context,
                                               builder: (context) {
                                                 return AnswerEditDialog(
-                                                  answerModel: answer,
+                                                  answer: answer,
                                                 );
                                               });
                                           provider.updateAnswer(

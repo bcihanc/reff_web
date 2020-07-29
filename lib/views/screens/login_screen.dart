@@ -44,10 +44,6 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.all(24),
-                child: Icon(Icons.group_work, size: 72),
-              ),
-              Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text("", style: style),
               ),

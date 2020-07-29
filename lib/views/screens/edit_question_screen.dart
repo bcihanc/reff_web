@@ -12,16 +12,16 @@ import 'package:reff_web/views/widgets/edit_question/header_field_and_date_picke
 import 'package:reff_web/views/widgets/edit_question/image_url_field.dart';
 
 class EditQuestionScreen extends StatelessWidget {
-  final QuestionModel questionModel;
+  final QuestionModel question;
   final List<AnswerModel> answers;
-  const EditQuestionScreen({Key key, this.questionModel, this.answers})
+  const EditQuestionScreen({Key key, this.question, this.answers})
       : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (context) => locator<QuestionProvider>(
-          param1: this.questionModel, param2: this.answers),
+          param1: this.question, param2: this.answers),
       child: Builder(
         builder: (context) {
           final provider = Provider.of<QuestionProvider>(context);
@@ -84,13 +84,13 @@ class IdShower extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<QuestionProvider>(context);
-    var idTextWidget = (provider.questionModel.id != null)
+    var idTextWidget = (provider.question.id != null)
         ? QuestionExistsState.exsist()
         : QuestionExistsState.notExsist();
 
     return Container(
         child: idTextWidget.when(
-      exsist: () => Text(provider.questionModel.id),
+      exsist: () => Text(provider.question.id),
       notExsist: () => Text('id null'),
     ));
   }

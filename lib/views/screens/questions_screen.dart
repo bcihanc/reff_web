@@ -4,9 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:reff_shared/core/models/models.dart';
+import 'package:reff_shared/core/services/api.dart';
 import 'package:reff_web/core/locator.dart';
 import 'package:reff_web/core/providers/main_provider.dart';
-import 'package:reff_web/core/services/firebase_api.dart';
 import 'package:reff_web/styles.dart';
 import 'package:reff_web/views/screens/edit_question_screen.dart';
 import 'package:reff_web/views/shared/custom_card.dart';
@@ -19,7 +19,7 @@ class QuestionsScreen extends StatefulWidget {
 }
 
 class _QuestionsScreenState extends State<QuestionsScreen> {
-  final api = locator<FirebaseApi>();
+  final api = locator<BaseApi>();
 
   DateTime _dateTime;
 
@@ -73,7 +73,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
               padding: mediumPadding,
               alignment: Alignment.topCenter,
               child: StreamBuilder<List<QuestionModel>>(
-                  stream: api.questionsSnaphotsByDay(_dateTime),
+                  stream: api.question.getsByDay(_dateTime),
                   builder: (context, snapshot) {
                     if (snapshot.hasData) {
                       final questions = snapshot.data;
@@ -100,7 +100,9 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                                               .subtract(Duration(days: 1));
                                         });
                                       }),
-                                  Text('Date',
+                                  Text(
+                                      DateFormat("dd.MM.yyyy")
+                                          .format(_dateTime),
                                       style: TextStyle(
                                           fontWeight: FontWeight.bold)),
                                   IconButton(
@@ -117,30 +119,27 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                             ],
                             rows: questions
                                 .map(
-                                  (questionModel) => DataRow(cells: [
-                                    DataCell(
-                                        Text(questionModel.id ?? "id null")),
-                                    DataCell(Text(questionModel.header)),
+                                  (question) => DataRow(cells: [
+                                    DataCell(Text(question.id ?? "id null")),
+                                    DataCell(Text(question.header)),
                                     DataCell(Text(
                                         DateFormat("HH:mm - dd.MM.yyyy")
-                                            .format(questionModel.timeStamp))),
+                                            .format(question.timeStamp))),
                                     DataCell(Wrap(
                                       children: [
                                         IconButton(
                                           onPressed: () async {
                                             mainProvider.busy();
-                                            final api = locator<FirebaseApi>();
-                                            final answers =
-                                                await api.getAnswersByIDs(
-                                                    questionModel.answers);
+                                            final api = locator<BaseApi>();
+                                            final answers = await api.answer
+                                                .getsByIDs(question.answers);
                                             mainProvider.notBusy();
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
                                                   builder: (context) =>
                                                       EditQuestionScreen(
-                                                        questionModel:
-                                                            questionModel,
+                                                        question: question,
                                                         answers: answers,
                                                       )),
                                             );
@@ -151,9 +150,9 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                                           onPressed: () async {
                                             mainProvider.busy();
 
-                                            await locator<FirebaseApi>()
-                                                .removeQuestion(
-                                                    questionModel.id);
+                                            await locator<BaseApi>()
+                                                .question
+                                                .remove(question.id);
                                             mainProvider.notBusy();
                                           },
                                           icon: Icon(Icons.delete),

@@ -3,18 +3,18 @@
 //import 'package:flutter_test/flutter_test.dart';
 //import 'package:reff_shared/core/models/models.dart';
 //import 'package:reff_web/core/locator.dart';
-//import 'package:reff_web/core/services/firebase_api.dart';
+//import 'package:reff_web/core/services/firestore_api.dart';
 //
 //main() async {
 //  TestWidgetsFlutterBinding.ensureInitialized();
 //  await setupLocator();
 //
 //  FirebaseApi api;
-//  QuestionModel questionModel;
+//  QuestionModel question;
 //
 //  group("question models", () {
 //    setUpAll(() async {
-//      questionModel = QuestionModel(
+//      question = QuestionModel(
 //          header: "header",
 //          content: "content",
 //          answers: ["id1", "id2"],
@@ -23,9 +23,9 @@
 //    });
 //
 //    test(" get metodu", () async {
-//      final addedQuestionID = await api.addQuestion(questionModel);
+//      final addedQuestionID = await api.addQuestion(question);
 //      final modelFirebase = await api.getQuestion(addedQuestionID);
-//      expect(questionModel, modelFirebase);
+//      expect(question, modelFirebase);
 //      final deleteResult = await api.deleteQuestion(addedQuestionID);
 //      expect(deleteResult, true);
 //    });

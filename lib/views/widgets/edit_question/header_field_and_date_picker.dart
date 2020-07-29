@@ -45,8 +45,7 @@ class _HeaderFieldAndDateTimePickerState
               child: Form(
                 key: provider.headerFormKey,
                 child: TextFormField(
-                    controller: _controller
-                      ..text = provider.questionModel.header,
+                    controller: _controller..text = provider.question.header,
                     onChanged: (value) {
                       if (value != null && value.isNotEmpty) {
                         provider.updateHeader(value);
@@ -87,7 +86,7 @@ class _HeaderFieldAndDateTimePickerState
                   provider.updateDate(dateTime);
                 },
                 icon: Icon(Icons.date_range),
-                label: Text(_dateTimeFormat(provider.questionModel.timeStamp))),
+                label: Text(_dateTimeFormat(provider.question.timeStamp))),
           ),
         )
       ],

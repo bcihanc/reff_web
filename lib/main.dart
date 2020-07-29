@@ -8,6 +8,7 @@ import 'package:reff_web/views/screens/login_screen.dart';
 import 'package:reff_web/views/screens/questions_screen.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   Logger.root.level = Level.ALL;
   hierarchicalLoggingEnabled = true;
   Logger.root.onRecord.listen((record) => debugPrint(
@@ -39,7 +40,6 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark()
           .copyWith(primaryColor: Colors.blueGrey, accentColor: Colors.cyan),
       home: Builder(builder: (context) {
-        final mainProvider = Provider.of<MainProvider>(context);
         return Scaffold(
           body: user != null ? QuestionsScreen() : LoginScreen(),
         );
