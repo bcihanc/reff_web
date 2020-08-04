@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
-import 'package:reff_web/views/shared/custom_card.dart';
+import 'package:reff_web/view/shared/custom_card.dart';
 
 class HeaderFieldAndDateTimePicker extends StatefulWidget {
   @override

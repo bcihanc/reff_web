@@ -6,10 +6,10 @@ import 'package:reff_web/core/locator.dart';
 import 'package:reff_web/core/models/Unions.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
-import 'package:reff_web/views/widgets/edit_question/answer_list.dart';
-import 'package:reff_web/views/widgets/edit_question/content_field.dart';
-import 'package:reff_web/views/widgets/edit_question/header_field_and_date_picker.dart';
-import 'package:reff_web/views/widgets/edit_question/image_url_field.dart';
+import 'package:reff_web/view/widgets/edit_question/answer_list.dart';
+import 'package:reff_web/view/widgets/edit_question/content_field.dart';
+import 'package:reff_web/view/widgets/edit_question/header_field_and_date_picker.dart';
+import 'package:reff_web/view/widgets/edit_question/image_url_field.dart';
 
 class EditQuestionScreen extends StatelessWidget {
   final QuestionModel question;

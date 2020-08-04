@@ -1,11 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:provider/provider.dart';
 import 'package:reff_web/core/locator.dart';
 import 'package:reff_web/core/providers/main_provider.dart';
-import 'package:reff_web/views/screens/login_screen.dart';
-import 'package:reff_web/views/screens/questions_screen.dart';
+import 'package:reff_web/view/screens/login_screen.dart';
+import 'package:reff_web/view/screens/questions_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,8 +29,6 @@ void main() async {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    var user = Provider.of<FirebaseUser>(context);
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Reff',
@@ -40,8 +39,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.dark()
           .copyWith(primaryColor: Colors.blueGrey, accentColor: Colors.cyan),
       home: Builder(builder: (context) {
+        final user = Provider.of<FirebaseUser>(context);
         return Scaffold(
-          body: user != null ? QuestionsScreen() : LoginScreen(),
+          body:
+              (user != null || kDebugMode) ? QuestionsScreen() : LoginScreen(),
         );
       }),
     );

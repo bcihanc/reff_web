@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -8,8 +9,8 @@ import 'package:reff_shared/core/services/api.dart';
 import 'package:reff_web/core/locator.dart';
 import 'package:reff_web/core/providers/main_provider.dart';
 import 'package:reff_web/styles.dart';
-import 'package:reff_web/views/screens/edit_question_screen.dart';
-import 'package:reff_web/views/shared/custom_card.dart';
+import 'package:reff_web/view/screens/edit_question_screen.dart';
+import 'package:reff_web/view/shared/custom_card.dart';
 
 class QuestionsScreen extends StatefulWidget {
   static const route = "/questions";
@@ -34,7 +35,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
     final mainProvider = Provider.of<MainProvider>(context);
     var user = Provider.of<FirebaseUser>(context);
 
-    return (user != null)
+    return (user != null || kDebugMode)
         ? Scaffold(
             appBar: AppBar(
                 flexibleSpace: Align(
@@ -73,7 +74,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
               padding: mediumPadding,
               alignment: Alignment.topCenter,
               child: StreamBuilder<List<QuestionModel>>(
-                  stream: api.question.getsByDay(_dateTime),
+                  stream: api.question.getsByDayStream(_dateTime),
                   builder: (context, snapshot) {
                     if (snapshot.hasData) {
                       final questions = snapshot.data;
@@ -132,7 +133,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                                             mainProvider.busy();
                                             final api = locator<BaseApi>();
                                             final answers = await api.answer
-                                                .getsByIDs(question.answers);
+                                                .gets(question.answers);
                                             mainProvider.notBusy();
                                             Navigator.push(
                                               context,

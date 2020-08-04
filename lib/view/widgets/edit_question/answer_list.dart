@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
-import 'package:reff_web/views/shared/custom_card.dart';
-import 'package:reff_web/views/widgets/edit_question/add_answer_button.dart';
-import 'package:reff_web/views/widgets/edit_question/new_answer_dialog.dart';
+import 'package:reff_web/view/shared/custom_card.dart';
+import 'package:reff_web/view/widgets/edit_question/add_answer_button.dart';
+import 'package:reff_web/view/widgets/edit_question/edit_answer_dialog.dart';
 
 class AnswerList extends StatelessWidget {
   @override
@@ -40,7 +41,7 @@ class AnswerList extends StatelessWidget {
                 ),
                 children: provider.answers
                     .map((answer) => Card(
-                          color: Colors.grey.withOpacity(0.3),
+                          color: answer.color.color().withOpacity(0.5),
                           key: Key(answer.content),
                           child: Container(
                               height: 70,
@@ -61,7 +62,7 @@ class AnswerList extends StatelessWidget {
                                           final editedAnswer = await showDialog(
                                               context: context,
                                               builder: (context) {
-                                                return AnswerEditDialog(
+                                                return EditAnswerDialog(
                                                   answer: answer,
                                                 );
                                               });
