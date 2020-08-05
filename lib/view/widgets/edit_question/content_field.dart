@@ -1,43 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:reff_web/core/providers/main_provider.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
 import 'package:reff_web/view/shared/custom_card.dart';
 
-class ContentField extends StatefulWidget {
-  @override
-  _ContentFieldState createState() => _ContentFieldState();
-}
-
-class _ContentFieldState extends State<ContentField> {
-  TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-  }
-
+class ContentField extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<QuestionProvider>(context, listen: false);
+    final _controller = useTextEditingController();
+    final key = useProvider(contentFormKey);
+
+    final questionProvider = useProvider(questionStateProvider);
 
     return CustomCard(
         child: Padding(
       padding: const EdgeInsets.all(8.0),
       child: Form(
-        key: provider.contentFormKey,
+        key: key,
         child: TextFormField(
-            controller: _controller..text = provider.question.content,
+            controller: _controller..text = questionProvider.question.content,
             onChanged: (value) {
               if (value != null && value.isNotEmpty) {
-                provider.updateContent(value);
+                questionProvider.updateContent(value);
               }
             },
             decoration: InputDecoration(

@@ -1,32 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
+import 'package:reff_web/core/providers/main_provider.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
 import 'package:reff_web/view/shared/custom_card.dart';
 
-class HeaderFieldAndDateTimePicker extends StatefulWidget {
-  @override
-  _HeaderFieldAndDateTimePickerState createState() =>
-      _HeaderFieldAndDateTimePickerState();
-}
-
-class _HeaderFieldAndDateTimePickerState
-    extends State<HeaderFieldAndDateTimePicker> {
-  TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-  }
-
+class HeaderFieldAndDateTimePicker extends HookWidget {
   String _dateTimeFormat(DateTime dateTime) {
     final format = DateFormat("dd.MM.yyyy");
     return format.format(dateTime);
@@ -34,7 +15,9 @@ class _HeaderFieldAndDateTimePickerState
 
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<QuestionProvider>(context);
+    final _controller = useTextEditingController();
+    final questionProvider = useProvider(questionStateProvider);
+    final key = useProvider(headerFormKey);
 
     return Row(
       children: [
@@ -43,16 +26,17 @@ class _HeaderFieldAndDateTimePickerState
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: Form(
-                key: provider.headerFormKey,
+                key: key,
                 child: TextFormField(
-                    controller: _controller..text = provider.question.header,
+                    controller: _controller
+                      ..text = questionProvider.question.header ?? "empty",
                     onChanged: (value) {
                       if (value != null && value.isNotEmpty) {
-                        provider.updateHeader(value);
+                        questionProvider.updateHeader(value);
                       }
                     },
                     validator: (value) {
-                      if (value.isEmpty) {
+                      if (value.isEmpty || value == "") {
                         return "Başlık boş olamaz";
                       }
                       return null;
@@ -83,10 +67,11 @@ class _HeaderFieldAndDateTimePickerState
                         lastDate: DateTime.now().add(Duration(days: 365)),
                       ) ??
                       DateTime.now();
-                  provider.updateDate(dateTime);
+                  questionProvider.updateDate(dateTime);
                 },
                 icon: Icon(Icons.date_range),
-                label: Text(_dateTimeFormat(provider.question.timeStamp))),
+                label:
+                    Text(_dateTimeFormat(questionProvider.question.timeStamp))),
           ),
         )
       ],

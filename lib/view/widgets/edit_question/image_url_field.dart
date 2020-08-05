@@ -1,34 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:reff_web/core/providers/main_provider.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
 import 'package:reff_web/view/shared/custom_card.dart';
 
-class ImageUrlField extends StatefulWidget {
-  ImageUrlField({Key key}) : super(key: key);
-
-  @override
-  _ImageUrlFieldState createState() => _ImageUrlFieldState();
-}
-
-class _ImageUrlFieldState extends State<ImageUrlField> {
-  TextEditingController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-  }
-
+class ImageUrlField extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<QuestionProvider>(context, listen: false);
+    final _controller = useTextEditingController();
+    final questionProvider = useProvider(questionStateProvider);
+    final key = useProvider(imageUrlFormKey);
 
     return CustomCard(
       child: Padding(
@@ -37,12 +20,12 @@ class _ImageUrlFieldState extends State<ImageUrlField> {
           children: [
             Expanded(
               child: Form(
-                key: provider.imageUrlFormKey,
+                key: key,
                 child: TextFormField(
                     controller: _controller,
                     onChanged: (value) {
                       if (value != null && value.isNotEmpty) {
-                        provider.updateImageUrl(value);
+                        questionProvider.updateImageUrl(value);
                       }
                     },
                     decoration: InputDecoration(
@@ -56,8 +39,8 @@ class _ImageUrlFieldState extends State<ImageUrlField> {
               ),
             ),
             VerticalDivider(),
-            (provider.question.imageUrl == null ||
-                    provider.question.imageUrl.isEmpty)
+            (questionProvider.question.imageUrl == null ||
+                    questionProvider.question.imageUrl.isEmpty)
                 ? CustomCard(
                     child: Container(
                       height: 100,
@@ -68,7 +51,7 @@ class _ImageUrlFieldState extends State<ImageUrlField> {
                   )
                 : Card(
                     child: Image.network(
-                      provider.question.imageUrl ??
+                      questionProvider.question.imageUrl ??
                           "https://via.placeholder.com/100",
                       height: 100,
                       width: 100,

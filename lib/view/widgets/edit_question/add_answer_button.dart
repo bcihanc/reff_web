@@ -1,15 +1,16 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
 import 'package:reff_web/view/widgets/edit_question/edit_answer_dialog.dart';
 
-class AddAnswerButton extends StatelessWidget {
+class AddAnswerButton extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<QuestionProvider>(context);
+    final questionProvider = useProvider(questionStateProvider);
 
     return Container(
       alignment: Alignment.centerRight,
@@ -20,7 +21,7 @@ class AddAnswerButton extends StatelessWidget {
             final answer = await showDialog<AnswerModel>(
                 context: context, builder: (context) => EditAnswerDialog());
             if (answer != null) {
-              provider.addAnswer(answer);
+              questionProvider.addAnswer(answer);
             }
           },
           icon: Icon(Icons.add),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
@@ -7,17 +8,18 @@ import 'package:reff_web/view/shared/custom_card.dart';
 import 'package:reff_web/view/widgets/edit_question/add_answer_button.dart';
 import 'package:reff_web/view/widgets/edit_question/edit_answer_dialog.dart';
 
-class AnswerList extends StatelessWidget {
+class AnswerList extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final provider = Provider.of<QuestionProvider>(context);
+    final questionProvider = useProvider(questionStateProvider);
+
     return Expanded(
       child: CustomCard(
         child: Padding(
           padding: mediumPadding,
           child: FutureBuilder(builder: (context, snapshot) {
             return ReorderableListView(
-                onReorder: provider.onReorderAnswerListToModel,
+                onReorder: questionProvider.onReorderAnswerListToModel,
                 header: Column(
                   children: [
                     Row(
@@ -39,7 +41,7 @@ class AnswerList extends StatelessWidget {
                     Divider(height: 0)
                   ],
                 ),
-                children: provider.answers
+                children: questionProvider.answers
                     .map((answer) => Card(
                           color: answer.color.color().withOpacity(0.5),
                           key: Key(answer.content),
@@ -66,13 +68,13 @@ class AnswerList extends StatelessWidget {
                                                   answer: answer,
                                                 );
                                               });
-                                          provider.updateAnswer(
+                                          questionProvider.updateAnswer(
                                               answer, editedAnswer);
                                         }),
                                     IconButton(
                                         icon: Icon(Icons.delete_forever),
                                         onPressed: () {
-                                          provider.removeAnswer(answer);
+                                          questionProvider.removeAnswer(answer);
                                         }),
                                   ],
                                 ),

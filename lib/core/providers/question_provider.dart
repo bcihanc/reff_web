@@ -1,49 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_shared/core/services/api.dart';
 import 'package:reff_web/core/locator.dart';
 import 'package:reff_web/core/models/Unions.dart';
+import 'package:reff_web/core/providers/main_provider.dart';
+
+final questionStateProvider =
+    ChangeNotifierProvider((ref) => QuestionProvider(ref));
 
 class QuestionProvider with ChangeNotifier {
   final _logger = Logger("QuestionProvider");
   final api = locator<BaseApi>();
 
-  QuestionExistsState questionExistsState;
+  final ProviderReference _ref;
 
-  final headerFormKey = GlobalKey<FormState>();
-  final contentFormKey = GlobalKey<FormState>();
-  final imageUrlFormKey = GlobalKey<FormState>();
+  QuestionExistsState questionExistsState;
 
   QuestionModel question;
   List<AnswerModel> answers;
 
-  bool isBusy;
+  QuestionProvider(this._ref);
 
-  static final questionForNew =
-      QuestionModel(header: "", timeStamp: DateTime.now());
+//  QuestionProvider({QuestionModel question, List<AnswerModel> answers}) {
+//    this.question =
+//        question ?? QuestionModel(header: "", timeStamp: DateTime.now());
+//    this.answers = answers ?? <AnswerModel>[];
+//  }
 
-  static final answersForNew = <AnswerModel>[];
+  void initialize({QuestionModel question, List<AnswerModel> answers}) {
+    _logger.info("initialize");
+    this.question =
+        question ?? QuestionModel(header: "", timeStamp: DateTime.now());
+    this.answers = answers ?? <AnswerModel>[];
 
-  QuestionProvider({QuestionModel question, List<AnswerModel> answers}) {
-    this.question = question ?? questionForNew;
-    this.answers = answers ?? answersForNew;
-
-    this.questionExistsState = (question != null && answers != null)
+    this.questionExistsState = (question?.id != null)
         ? QuestionExistsState.exsist()
         : QuestionExistsState.notExsist();
-
-    this.isBusy = false;
-  }
-
-  busy() {
-    isBusy = true;
-    notifyListeners();
-  }
-
-  notBusy() {
-    isBusy = false;
-    notifyListeners();
   }
 
   void onReorderAnswerListToModel(int oldIndex, int newIndex) {
@@ -113,11 +108,11 @@ class QuestionProvider with ChangeNotifier {
     }
   }
 
-  Future<void> saveToFirebase() async {
+  Future<bool> saveToFirebase() async {
     if (this.answers.isNotEmpty &&
-        this.headerFormKey.currentState.validate() &&
-        this.contentFormKey.currentState.validate() &&
-        this.imageUrlFormKey.currentState.validate()) {
+        _ref.read(headerFormKey).currentState.validate() &&
+        _ref.read(contentFormKey).currentState.validate() &&
+        _ref.read(imageUrlFormKey).currentState.validate()) {
       await this.questionExistsState.when(
         // yeni bir question kaydedilirken
         notExsist: () async {
@@ -151,6 +146,8 @@ class QuestionProvider with ChangeNotifier {
           _logger.info('updateAnswerToFirebase tercihler güncellendi');
         },
       );
-    }
+      return true;
+    } else
+      return false;
   }
 }
