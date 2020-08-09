@@ -7,143 +7,158 @@ import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_shared/core/services/api.dart';
 import 'package:reff_web/core/locator.dart';
 import 'package:reff_web/core/providers/main_provider.dart';
+import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
 import 'package:reff_web/view/screens/edit_question_screen.dart';
-import 'package:reff_web/view/shared/custom_card.dart';
+import 'package:reff_web/view/widgets/custom_card.dart';
+import 'package:reff_web/view/widgets/edit_question_widgets.dart';
+
+final questionsFromApi =
+    StreamProvider((_) => locator<BaseApi>().question.getsStream());
 
 class QuestionsScreen extends HookWidget {
   static const route = "/questions";
-  final api = locator<BaseApi>();
 
   @override
   Widget build(BuildContext context) {
     final _dateTime = useState(DateTime.now());
+
     final busyState = useProvider(busyStateProvider.state);
+    final questionState = useProvider(questionChangeNotifierProvider);
+
+    final questionsStream = useProvider(questionsFromApi);
 
     return Scaffold(
-      appBar: AppBar(
-          flexibleSpace: Align(
-              alignment: Alignment.centerRight,
-              child: busyState
-                  ? Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: CircularProgressIndicator(),
-                    )
-                  : null),
-          title: Text('Reff Panel', style: GoogleFonts.pacifico())),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
+      appBar: _appBar(busyState),
+      floatingActionButton: QuestionsScreenFloatingActionButton(),
+      body: Column(
         children: [
-          FloatingActionButton(
-              heroTag: "date",
-              backgroundColor: Colors.blueGrey,
-              child: Icon(Icons.date_range),
-              onPressed: () {}),
-          Divider(color: Colors.transparent),
-          FloatingActionButton(
-              heroTag: "add",
-              child: Icon(Icons.add),
-              backgroundColor: Colors.blueGrey,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => EditQuestionScreen()),
-                );
-              }),
+          FilterBar(),
+          Container(
+            padding: mediumPadding,
+            alignment: Alignment.topCenter,
+            child: questionsStream.when(
+                data: (questions) => CustomCard(
+                      child: DataTable(
+                          columns: ["Active", "Header", "Date", "Edit"]
+                              .map((e) => DataColumn(
+                                    label: Text(e,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold)),
+                                  ))
+                              .toList(),
+                          rows: questions
+                              .map(
+                                (question) => DataRow(cells: [
+                                  DataCell(question.isActive
+                                      ? Icon(Icons.brightness_1)
+                                      : SizedBox.shrink()),
+                                  DataCell(Text(
+                                    question.header,
+                                  )),
+                                  DataCell(Text(DateFormat("HH:mm - dd.MM.yyyy")
+                                      .format(question.timeStamp))),
+                                  DataCell(Row(
+                                    children: [
+                                      IconButton(
+                                        onPressed: () async {
+                                          busyStateProvider
+                                              .read(context)
+                                              .busy();
+                                          final api = locator<BaseApi>();
+                                          final answers = await api.answer
+                                              .gets(question.answers);
+                                          busyStateProvider
+                                              .read(context)
+                                              .notBusy();
+
+                                          questionState.initialize(
+                                              answers: answers,
+                                              question: question);
+
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    EditQuestionScreen()),
+                                          );
+                                        },
+                                        icon: Icon(Icons.edit),
+                                      ),
+                                      IconButton(
+                                        onPressed: () async {
+                                          busyStateProvider
+                                              .read(context)
+                                              .busy();
+
+                                          await locator<BaseApi>()
+                                              .question
+                                              .remove(question.id);
+                                          busyStateProvider
+                                              .read(context)
+                                              .notBusy();
+                                        },
+                                        icon: Icon(Icons.delete),
+                                      ),
+                                    ],
+                                  )),
+                                ]),
+                              )
+                              .toList()),
+                    ),
+                loading: () => CircularProgressIndicator(),
+                error: (err, stack) => Text("$err")),
+          ),
         ],
       ),
-      body: Container(
-        padding: mediumPadding,
-        alignment: Alignment.topCenter,
-        child: StreamBuilder<List<QuestionModel>>(
-            stream: api.question.getsStream(),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                final questions = snapshot.data;
-                return CustomCard(
-                  child: DataTable(
-                      columns: [
-                        DataColumn(
-                            label: Text('Document ID',
-                                style: TextStyle(fontWeight: FontWeight.bold))),
-                        DataColumn(
-                            label: Text(
-                          'Header',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        )),
-                        DataColumn(
-                            label: Row(
-                          children: [
-                            IconButton(
-                                icon: Icon(Icons.chevron_left),
-                                onPressed: () {
-                                  _dateTime.value = _dateTime.value
-                                      .subtract(Duration(days: 1));
-                                }),
-                            Text(
-                                DateFormat("dd.MM.yyyy")
-                                    .format(_dateTime.value),
-                                style: TextStyle(fontWeight: FontWeight.bold)),
-                            IconButton(
-                                icon: Icon(Icons.chevron_right),
-                                onPressed: () {
-                                  _dateTime.value =
-                                      _dateTime.value.add(Duration(days: 1));
-                                }),
-                          ],
-                        )),
-                        DataColumn(label: Text('')),
-                      ],
-                      rows: questions
-                          .map(
-                            (question) => DataRow(cells: [
-                              DataCell(Text(question.id ?? "id null")),
-                              DataCell(Text(question.header)),
-                              DataCell(Text(DateFormat("HH:mm - dd.MM.yyyy")
-                                  .format(question.timeStamp))),
-                              DataCell(Wrap(
-                                children: [
-                                  IconButton(
-                                    onPressed: () async {
-                                      busyStateProvider.read(context).busy();
-                                      final api = locator<BaseApi>();
-                                      final answers = await api.answer
-                                          .gets(question.answers);
-                                      busyStateProvider.read(context).notBusy();
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                EditQuestionScreen(
-                                                  question: question,
-                                                  answers: answers,
-                                                )),
-                                      );
-                                    },
-                                    icon: Icon(Icons.edit),
-                                  ),
-                                  IconButton(
-                                    onPressed: () async {
-                                      busyStateProvider.read(context).busy();
+    );
+  }
+}
 
-                                      await locator<BaseApi>()
-                                          .question
-                                          .remove(question.id);
-                                      busyStateProvider.read(context).notBusy();
-                                    },
-                                    icon: Icon(Icons.delete),
-                                  ),
-                                ],
-                              )),
-                            ]),
-                          )
-                          .toList()),
-                );
-              }
-              return Center(child: Text('no question data'));
+AppBar _appBar(bool busyState) => AppBar(
+    flexibleSpace: Align(
+        alignment: Alignment.centerRight,
+        child: busyState
+            ? Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: CircularProgressIndicator(),
+              )
+            : null),
+    title: Text('Reff Panel', style: GoogleFonts.pacifico()));
+
+class QuestionsScreenFloatingActionButton extends HookWidget {
+  const QuestionsScreenFloatingActionButton({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final questionState = useProvider(questionChangeNotifierProvider);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        FloatingActionButton(
+            heroTag: "date",
+            backgroundColor: Colors.blueGrey,
+            child: Icon(Icons.date_range),
+            onPressed: () {}),
+        Divider(color: Colors.transparent),
+        FloatingActionButton(
+            heroTag: "add",
+            child: Icon(Icons.add),
+            backgroundColor: Colors.blueGrey,
+            onPressed: () {
+              questionState.initialize(
+                  answers: <AnswerModel>[],
+                  question: QuestionModel(
+                      header: "başlayalım", timeStamp: DateTime.now()));
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => EditQuestionScreen()),
+              );
             }),
-      ),
+      ],
     );
   }
 }
