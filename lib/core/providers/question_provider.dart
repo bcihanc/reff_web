@@ -6,47 +6,52 @@ import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_shared/core/services/api.dart';
 import 'package:reff_web/core/locator.dart';
 import 'package:reff_web/core/models/Unions.dart';
-import 'package:reff_web/core/providers/main_provider.dart';
 
-final questionStateProvider =
-    ChangeNotifierProvider((ref) => QuestionProvider(ref));
+final questionChangeNotifierProvider =
+    ChangeNotifierProvider((ref) => QuestionChangeNotifier(ref));
 
-class QuestionProvider with ChangeNotifier {
+final filterChangeNotifierProvider =
+    ChangeNotifierProvider((ref) => FilterChangeNotifier());
+
+class FilterChangeNotifier with ChangeNotifier {
+  DateTime _dateTime = DateTime.now();
+  DateTime get dateTime => this._dateTime;
+  void setDateTime(DateTime dateTime) {
+    this._dateTime = dateTime;
+    notifyListeners();
+  }
+}
+
+class QuestionChangeNotifier with ChangeNotifier {
   final _logger = Logger("QuestionProvider");
   final api = locator<BaseApi>();
 
-  final ProviderReference _ref;
-
-  QuestionExistsState questionExistsState;
-
   QuestionModel question;
   List<AnswerModel> answers;
+  QuestionExistsState questionExistsState;
+  final ProviderReference ref;
 
-  QuestionProvider(this._ref);
+  QuestionChangeNotifier(this.ref);
 
-//  QuestionProvider({QuestionModel question, List<AnswerModel> answers}) {
-//    this.question =
-//        question ?? QuestionModel(header: "", timeStamp: DateTime.now());
-//    this.answers = answers ?? <AnswerModel>[];
-//  }
-
-  void initialize({QuestionModel question, List<AnswerModel> answers}) {
-    _logger.info("initialize");
-    this.question =
-        question ?? QuestionModel(header: "", timeStamp: DateTime.now());
-    this.answers = answers ?? <AnswerModel>[];
+  void initialize(
+      {@required QuestionModel question, @required List<AnswerModel> answers}) {
+    this.question = question;
+    this.answers = answers;
 
     this.questionExistsState = (question?.id != null)
         ? QuestionExistsState.exsist()
         : QuestionExistsState.notExsist();
+    _logger.info("initialized complete");
   }
 
+  // todo : bug
   void onReorderAnswerListToModel(int oldIndex, int newIndex) {
     if (newIndex > oldIndex) {
       newIndex -= 1;
     }
     final item = answers.removeAt(oldIndex);
     answers.insert(newIndex, item);
+    notifyListeners();
     _logger.info("onReorderAnswerList | tercih sırası değiştirildi");
   }
 
@@ -76,6 +81,12 @@ class QuestionProvider with ChangeNotifier {
     this.answers.add(answer);
     notifyListeners();
     _logger.info("addAnswer | yeni tercih eklendi");
+  }
+
+  void updateActive(bool value) {
+    this.question = this.question.copyWith.call(isActive: value);
+    notifyListeners();
+    _logger.info("updateActive | $value");
   }
 
   void removeAnswer(AnswerModel answer) {
@@ -108,11 +119,8 @@ class QuestionProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> saveToFirebase() async {
-    if (this.answers.isNotEmpty &&
-        _ref.read(headerFormKey).currentState.validate() &&
-        _ref.read(contentFormKey).currentState.validate() &&
-        _ref.read(imageUrlFormKey).currentState.validate()) {
+  Future<bool> saveToFirebase({@required bool validation}) async {
+    if (this.answers.isNotEmpty && validation) {
       await this.questionExistsState.when(
         // yeni bir question kaydedilirken
         notExsist: () async {
@@ -148,6 +156,7 @@ class QuestionProvider with ChangeNotifier {
       );
       return true;
     } else
-      return false;
+      _logger.warning("saveToFirebase validaston hatası");
+    return false;
   }
 }

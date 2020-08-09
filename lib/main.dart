@@ -7,7 +7,7 @@ import 'package:logging/logging.dart';
 import 'package:reff_web/core/locator.dart';
 import 'package:reff_web/view/screens/questions_screen.dart';
 
-final authState = StreamProvider.autoDispose<FirebaseUser>(
+final authState = StreamProvider<FirebaseUser>(
     (_) => FirebaseAuth.instance.onAuthStateChanged);
 
 void main() async {
@@ -37,16 +37,17 @@ class MyApp extends HookWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Reff',
-      initialRoute: '/',
-      routes: {
-        QuestionsScreen.route: (context) => QuestionsScreen(),
-      },
+//      initialRoute: '/',
+//      routes: {
+//        QuestionsScreen.route: (context) => QuestionsScreen(),
+//      },
       theme: ThemeData.dark()
           .copyWith(primaryColor: Colors.blueGrey, accentColor: Colors.cyan),
-      home: auth.when(
-          data: (data) => QuestionsScreen(),
-          loading: () => Text('auth loading'),
-          error: (err, stack) => Text('$err')),
+//      home: auth.when(
+//          data: (data) => QuestionsScreen(),
+//          loading: () => Text('auth loading'),
+//          error: (err, stack) => Text('$err')),
+      home: QuestionsScreen(),
     );
   }
 }

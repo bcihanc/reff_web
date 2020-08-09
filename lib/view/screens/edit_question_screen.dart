@@ -3,32 +3,28 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logging/logging.dart';
-import 'package:reff_shared/core/models/models.dart';
-import 'package:reff_web/core/models/Unions.dart';
 import 'package:reff_web/core/providers/main_provider.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
-import 'package:reff_web/view/widgets/edit_question/answer_list.dart';
-import 'package:reff_web/view/widgets/edit_question/content_field.dart';
-import 'package:reff_web/view/widgets/edit_question/header_field_and_date_picker.dart';
-import 'package:reff_web/view/widgets/edit_question/image_url_field.dart';
+import 'package:reff_web/view/widgets/edit_question_widgets.dart';
 
 class EditQuestionScreen extends HookWidget {
-  final QuestionModel question;
-  final List<AnswerModel> answers;
-  EditQuestionScreen({Key key, this.question, this.answers}) : super(key: key);
-
   final _logger = Logger("EditQuestionScreen");
+
+  final headerFormState = GlobalKey<FormState>();
+  final contentFormState = GlobalKey<FormState>();
+  final imageURLFormState = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
-    _logger.info("build");
-    final provider = useProvider(questionStateProvider);
-    final busyState = useProvider(busyStateProvider.state);
+    bool _validation() =>
+        headerFormState.currentState.validate() &&
+        contentFormState.currentState.validate() &&
+        imageURLFormState.currentState.validate();
 
-    useMemoized(() {
-      provider.initialize(question: question, answers: answers);
-    });
+    _logger.info("build");
+    final questionProvider = useProvider(questionChangeNotifierProvider);
+    final busyState = useProvider(busyStateProvider.state);
 
     return Scaffold(
       appBar: AppBar(
@@ -40,58 +36,87 @@ class EditQuestionScreen extends HookWidget {
                       child: CircularProgressIndicator(),
                     )
                   : null),
-          title: Text("title", style: GoogleFonts.pacifico())),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-              heroTag: "delete",
-              backgroundColor: Colors.blueGrey,
-              child: Icon(Icons.delete),
-              onPressed: () {}),
-          Divider(color: Colors.transparent),
-          FloatingActionButton(
-              heroTag: "save",
-              child: Icon(Icons.save),
-              backgroundColor: Colors.blueGrey,
-              onPressed: () async {
-                busyStateProvider.read(context).busy();
-                final result = await provider.saveToFirebase();
-                busyStateProvider.read(context).notBusy();
-                if (result) Navigator.pop(context);
-              }),
-        ],
-      ),
+          title: Text("edit", style: GoogleFonts.pacifico())),
+      floatingActionButton: Builder(
+          builder: (context) => Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  FloatingActionButton(
+                      heroTag: "delete",
+                      backgroundColor: Colors.blueGrey,
+                      child: Icon(Icons.delete),
+                      onPressed: () {}),
+                  Divider(color: Colors.transparent),
+                  FloatingActionButton(
+                      heroTag: "save",
+                      child: Icon(Icons.save),
+                      backgroundColor: Colors.blueGrey,
+                      onPressed: () async {
+                        if (questionProvider.answers.length < 2) {
+                          Scaffold.of(context).showSnackBar(SnackBar(
+                              content: Text('En az 2 tercih eklemelisin')));
+                        } else {
+                          busyStateProvider.read(context).busy();
+                          final result = await questionProvider.saveToFirebase(
+                              validation: _validation());
+                          busyStateProvider.read(context).notBusy();
+                          if (result) {
+                            Navigator.pop(context);
+                          }
+                        }
+                      }),
+                ],
+              )),
       body: Container(
         padding: mediumPadding,
         child: Column(
           children: [
-            HeaderFieldAndDateTimePicker(),
-            ContentField(),
-            ImageUrlField(),
-            AnswerList(),
-            IdShower()
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IdShower(),
+                  CountryShower(country: questionProvider.question.country),
+                  DatePicker(),
+                  IsActiveQuestion(
+                    initialValue: questionProvider.question.isActive,
+                    onChanged: (value) => questionProvider.updateActive(value),
+                  )
+                ],
+              ),
+            ),
+            HeaderField(
+              formState: this.headerFormState,
+              initialValue: questionProvider.question.header ?? "",
+              onChanged: (value) {
+                if (value != null && value.isNotEmpty) {
+                  questionProvider.updateHeader(value);
+                }
+              },
+            ),
+            ContentField(
+                formState: this.contentFormState,
+                initialValue: questionProvider.question.content ?? "",
+                onChanged: (value) {
+                  if (value != null && value.isNotEmpty) {
+                    questionProvider.updateContent(value);
+                  }
+                }),
+            ImageUrlField(
+              formState: this.imageURLFormState,
+              initialValue: questionProvider.question.imageUrl ?? "",
+              onChanged: (value) {
+                if (value != null && value.isNotEmpty) {
+                  questionProvider.updateImageUrl(value);
+                }
+              },
+            ),
+            Expanded(child: AnswerList()),
           ],
         ),
       ),
     );
-  }
-}
-
-class IdShower extends HookWidget {
-  @override
-  Widget build(BuildContext context) {
-    final questionProvider = useProvider(questionStateProvider);
-
-    var idTextWidget = (questionProvider.question.id != null)
-        ? QuestionExistsState.exsist()
-        : QuestionExistsState.notExsist();
-
-    return Container(
-        child: idTextWidget.when(
-      exsist: () => Text(questionProvider.question.id),
-      notExsist: () => Text('id null'),
-    ));
   }
 }
