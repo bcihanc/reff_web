@@ -19,14 +19,6 @@ void main() async {
       '${record.level.name}: ${record.loggerName}: ${record.message}'));
 
   await setupLocator();
-//  runApp(MultiProvider(
-//    providers: [
-//      StreamProvider<FirebaseUser>.value(
-//          value: FirebaseAuth.instance.onAuthStateChanged),
-//      ChangeNotifierProvider(create: (context) => locator<MainProvider>()),
-//    ],
-//    child: MyApp(),
-//  ));
   runApp(ProviderScope(child: MyApp()));
 }
 
@@ -37,11 +29,7 @@ class MyApp extends HookWidget {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Reff',
-//      initialRoute: '/',
-//      routes: {
-//        QuestionsScreen.route: (context) => QuestionsScreen(),
-//      },
+      title: 'Reff Panel',
       theme: ThemeData.dark()
           .copyWith(primaryColor: Colors.blueGrey, accentColor: Colors.cyan),
       home: auth.when(

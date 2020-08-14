@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logging/logging.dart';
+import 'package:reff_shared/core/models/CityModel.dart';
 import 'package:reff_web/core/providers/main_provider.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
@@ -36,7 +36,7 @@ class EditQuestionScreen extends HookWidget {
                       child: CircularProgressIndicator(),
                     )
                   : null),
-          title: Text("edit", style: GoogleFonts.pacifico())),
+          title: Text("edit")),
       floatingActionButton: Builder(
           builder: (context) => Column(
                 mainAxisSize: MainAxisSize.min,
@@ -71,21 +71,32 @@ class EditQuestionScreen extends HookWidget {
       body: Container(
         padding: mediumPadding,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IdShower(),
-                  CountryShower(country: questionProvider.question.country),
-                  DatePicker(),
-                  IsActiveQuestion(
-                    initialValue: questionProvider.question.isActive,
-                    onChanged: (value) => questionProvider.updateActive(value),
-                  )
-                ],
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                CountryPicker(
+                  countries: CountryModel.COUNTRIES,
+                  initialCountry: CountryModel.COUNTRIES.singleWhere(
+                      (country) =>
+                          country.code ==
+                          questionProvider.question.countryCode),
+                  onChanged: (CountryModel country) =>
+                      questionProvider.updateCountry(country),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DatePicker(),
+                    IsActiveQuestion(
+                      initialValue: questionProvider.question.isActive,
+                      onChanged: (value) =>
+                          questionProvider.updateActive(value),
+                    )
+                  ],
+                ),
+              ],
             ),
             HeaderField(
               formState: this.headerFormState,

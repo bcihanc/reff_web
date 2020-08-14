@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:reff_shared/core/models/models.dart';
@@ -44,16 +43,17 @@ class QuestionChangeNotifier with ChangeNotifier {
     _logger.info("initialized complete");
   }
 
-  // todo : bug
-  void onReorderAnswerListToModel(int oldIndex, int newIndex) {
-    if (newIndex > oldIndex) {
-      newIndex -= 1;
-    }
-    final item = answers.removeAt(oldIndex);
-    answers.insert(newIndex, item);
-    notifyListeners();
-    _logger.info("onReorderAnswerList | tercih sırası değiştirildi");
-  }
+//  void onReorderAnswerListToModel(int oldIndex, int newIndex) {
+//    if (newIndex > oldIndex) {
+//      newIndex -= 1;
+//    }
+//    final item = answers.removeAt(oldIndex);
+//    answers.insert(newIndex, item);
+//    notifyListeners();
+//
+//    _logger.info("$answers");
+//    _logger.info("onReorderAnswerList | tercih sırası değiştirildi");
+//  }
 
   void updateDate(DateTime dateTime) {
     this.question = this.question.copyWith.call(timeStamp: dateTime);
@@ -87,6 +87,12 @@ class QuestionChangeNotifier with ChangeNotifier {
     this.question = this.question.copyWith.call(isActive: value);
     notifyListeners();
     _logger.info("updateActive | $value");
+  }
+
+  void updateCountry(CountryModel country) {
+    this.question = this.question.copyWith.call(countryCode: country.code);
+    notifyListeners();
+    _logger.info("updateCountry | ${country.code}");
   }
 
   void removeAnswer(AnswerModel answer) {
@@ -124,7 +130,7 @@ class QuestionChangeNotifier with ChangeNotifier {
       await this.questionExistsState.when(
         // yeni bir question kaydedilirken
         notExsist: () async {
-          final ids = await api.answer.add(answers);
+          final ids = await api.answer.adds(this.answers);
           _logger.info('saveAll : ${ids.length} adet tercih kaydedildi');
 
           final question = this.question.copyWith.call(answers: ids);
@@ -134,7 +140,7 @@ class QuestionChangeNotifier with ChangeNotifier {
 
         // varolan bir question güncellenirken
         exsist: () async {
-          var newAnswers = <AnswerModel>[];
+          final newAnswers = <AnswerModel>[];
 
           for (final answer in this.answers) {
             if (answer.id != null) {
@@ -145,7 +151,7 @@ class QuestionChangeNotifier with ChangeNotifier {
               this.answers.remove(answer);
             }
             if (newAnswers.isNotEmpty) {
-              final ids = await api.answer.add(newAnswers);
+              final ids = await api.answer.adds(newAnswers);
               this.question.answers.addAll(ids);
             }
 

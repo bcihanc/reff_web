@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:reff_shared/core/models/models.dart';
@@ -27,7 +26,6 @@ class QuestionsScreen extends HookWidget {
     final questionState = useProvider(questionChangeNotifierProvider);
 
     final questionsStream = useProvider(questionsFromApi);
-
     return Scaffold(
       appBar: _appBar(busyState),
       floatingActionButton: QuestionsScreenFloatingActionButton(),
@@ -36,11 +34,11 @@ class QuestionsScreen extends HookWidget {
           FilterBar(),
           Container(
             padding: mediumPadding,
-            alignment: Alignment.topCenter,
+            width: double.maxFinite,
             child: questionsStream.when(
                 data: (questions) => CustomCard(
                       child: DataTable(
-                          columns: ["Active", "Header", "Date", "Edit"]
+                          columns: ["Header", "Date", ""]
                               .map((e) => DataColumn(
                                     label: Text(e,
                                         style: TextStyle(
@@ -50,15 +48,17 @@ class QuestionsScreen extends HookWidget {
                           rows: questions
                               .map(
                                 (question) => DataRow(cells: [
-                                  DataCell(question.isActive
-                                      ? Icon(Icons.brightness_1)
-                                      : SizedBox.shrink()),
                                   DataCell(Text(
                                     question.header,
+                                    style: TextStyle(
+                                        fontWeight: question.isActive
+                                            ? FontWeight.bold
+                                            : FontWeight.w100),
                                   )),
                                   DataCell(Text(DateFormat("HH:mm - dd.MM.yyyy")
                                       .format(question.timeStamp))),
                                   DataCell(Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
                                       IconButton(
                                         onPressed: () async {
@@ -106,7 +106,7 @@ class QuestionsScreen extends HookWidget {
                               )
                               .toList()),
                     ),
-                loading: () => CircularProgressIndicator(),
+                loading: () => Center(child: LinearProgressIndicator()),
                 error: (err, stack) => Text("$err")),
           ),
         ],
@@ -124,7 +124,7 @@ AppBar _appBar(bool busyState) => AppBar(
                 child: CircularProgressIndicator(),
               )
             : null),
-    title: Text('Reff Panel', style: GoogleFonts.pacifico()));
+    title: Text('Reff Panel'));
 
 class QuestionsScreenFloatingActionButton extends HookWidget {
   const QuestionsScreenFloatingActionButton({Key key}) : super(key: key);
@@ -137,12 +137,12 @@ class QuestionsScreenFloatingActionButton extends HookWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        FloatingActionButton(
-            heroTag: "date",
-            backgroundColor: Colors.blueGrey,
-            child: Icon(Icons.date_range),
-            onPressed: () {}),
-        Divider(color: Colors.transparent),
+//        FloatingActionButton(
+//            heroTag: "date",
+//            backgroundColor: Colors.blueGrey,
+//            child: Icon(Icons.date_range),
+//            onPressed: () {}),
+//        Divider(color: Colors.transparent),
         FloatingActionButton(
             heroTag: "add",
             child: Icon(Icons.add),
@@ -151,8 +151,9 @@ class QuestionsScreenFloatingActionButton extends HookWidget {
               questionState.initialize(
                   answers: <AnswerModel>[],
                   question: QuestionModel(
-                      header: "başlayalım", timeStamp: DateTime.now()));
-
+                      countryCode: "tr",
+                      header: "",
+                      timeStamp: DateTime.now()));
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => EditQuestionScreen()),

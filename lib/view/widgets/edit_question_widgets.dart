@@ -2,15 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:logging/logging.dart';
 import 'package:reff_shared/core/models/CityModel.dart';
 import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_shared/core/utils/constants.dart';
 import 'package:reff_web/core/models/Unions.dart';
-import 'package:reff_web/core/providers/main_provider.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
 import 'package:reff_web/view/widgets/custom_card.dart';
+import 'package:searchable_dropdown/searchable_dropdown.dart';
 
 class AddAnswerButton extends HookWidget {
   AddAnswerButton({@required this.onPressed});
@@ -40,78 +39,74 @@ class AnswerList extends HookWidget {
     return CustomCard(
       child: Padding(
         padding: mediumPadding,
-        child: FutureBuilder(builder: (context, snapshot) {
-          return ReorderableListView(
-              onReorder: questionProvider.onReorderAnswerListToModel,
-              header: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(4.0),
+                  child: Row(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: Row(
+                      Icon(Icons.radio_button_checked),
+                      VerticalDivider(color: Colors.transparent),
+                      Text('Tercih Listesi'),
+                    ],
+                  ),
+                ),
+                AddAnswerButton(onPressed: () async {
+                  final answer = await showDialog<AnswerModel>(
+                      context: context,
+                      builder: (context) => EditAnswerDialog());
+                  if (answer != null) {
+                    questionProvider.addAnswer(answer);
+                  }
+                }),
+              ],
+            ),
+            Expanded(
+              child: ListView.builder(
+                  itemCount: questionProvider.answers.length,
+                  itemBuilder: (context, index) {
+                    final answer = questionProvider.answers[index];
+
+                    return CustomCard(
+                      color: answer.color.color().withOpacity(0.5),
+                      child: ListTile(
+                        dense: true,
+                        title: Text(answer.content),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.radio_button_checked),
-                            VerticalDivider(color: Colors.transparent),
-                            Text('Tercih Listesi'),
+                            IconButton(
+                                icon: Icon(Icons.edit),
+                                onPressed: () async {
+                                  final editedAnswer =
+                                      await showDialog<AnswerModel>(
+                                          context: context,
+                                          builder: (context) {
+                                            return EditAnswerDialog(
+                                              answer: answer,
+                                            );
+                                          });
+                                  if (editedAnswer != null) {
+                                    questionProvider.updateAnswer(
+                                        answer, editedAnswer);
+                                  }
+                                }),
+                            IconButton(
+                                icon: Icon(Icons.delete_forever),
+                                onPressed: () {
+                                  questionProvider.removeAnswer(answer);
+                                }),
                           ],
                         ),
                       ),
-                      AddAnswerButton(onPressed: () async {
-                        final answer = await showDialog<AnswerModel>(
-                            context: context,
-                            builder: (context) => EditAnswerDialog());
-                        if (answer != null) {
-                          questionProvider.addAnswer(answer);
-                        }
-                      }),
-                    ],
-                  ),
-                  Divider(height: 0)
-                ],
-              ),
-              children: questionProvider.answers
-                  .map((answer) => Card(
-                        color: answer.color.color().withOpacity(0.5),
-                        key: Key(answer.content),
-                        child: Container(
-                            height: 70,
-                            width: double.infinity,
-                            child: Padding(
-                              padding: mediumPadding,
-                              child: Row(
-                                children: [
-                                  Icon(Icons.reorder),
-                                  VerticalDivider(
-                                    width: 20,
-                                    color: Colors.transparent,
-                                  ),
-                                  Expanded(child: Text(answer.content)),
-                                  IconButton(
-                                      icon: Icon(Icons.edit),
-                                      onPressed: () async {
-                                        final editedAnswer = await showDialog(
-                                            context: context,
-                                            builder: (context) {
-                                              return EditAnswerDialog(
-                                                answer: answer,
-                                              );
-                                            });
-                                        questionProvider.updateAnswer(
-                                            answer, editedAnswer);
-                                      }),
-                                  IconButton(
-                                      icon: Icon(Icons.delete_forever),
-                                      onPressed: () {
-                                        questionProvider.removeAnswer(answer);
-                                      }),
-                                ],
-                              ),
-                            )),
-                      ))
-                  .toList());
-        }),
+                    );
+                  }),
+            )
+          ],
+        ),
       ),
     );
   }
@@ -191,8 +186,10 @@ class _SomeWidgetState extends State<EditAnswerDialog> {
                   controller: controller,
                   autofocus: true,
                   onChanged: (value) {
-                    answerState.value =
-                        answerState.value.copyWith.call(content: value);
+                    if (value != null) {
+                      answerState.value =
+                          answerState.value.copyWith.call(content: value);
+                    }
                   },
                   decoration: InputDecoration(
                     hintText: "İçerik",
@@ -203,8 +200,10 @@ class _SomeWidgetState extends State<EditAnswerDialog> {
                   )),
               EditColorPicker(
                 onChanged: (Color value) {
-                  answerState.value =
-                      answerState.value.copyWith.call(color: value.myColor());
+                  if (value != null) {
+                    answerState.value =
+                        answerState.value.copyWith.call(color: value.myColor());
+                  }
                 },
               ),
               Align(
@@ -445,25 +444,29 @@ class IsActiveQuestion extends HookWidget {
   }
 }
 
-class CountryShower extends HookWidget {
-  CountryShower({this.country});
-  final Country country;
+class CountryPicker extends HookWidget {
+  CountryPicker(
+      {@required this.initialCountry,
+      @required this.countries,
+      @required this.onChanged});
+  final List<CountryModel> countries;
+  final CountryModel initialCountry;
+  final ValueChanged<CountryModel> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return CustomCard(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-        child: Container(
-          height: 48,
-          child: Row(
-            children: [
-              Icon(Icons.map),
-              VerticalDivider(color: Colors.transparent, width: 4),
-              Text("${country.toString()}")
-            ],
-          ),
-        ),
+      child: SearchableDropdown<CountryModel>.single(
+        value: this.initialCountry ?? countries.first,
+        items: countries
+            .map((country) => DropdownMenuItem(
+                  child: Text(country.name),
+                  value: country,
+                ))
+            .toList(),
+        onChanged: (value) {
+          onChanged(value);
+        },
       ),
     );
   }
@@ -477,7 +480,7 @@ class FilterBar extends HookWidget {
     final _filterChangeNotifier = useProvider(filterChangeNotifierProvider);
 
     return Padding(
-      padding: const EdgeInsets.only(right: 18, left: 18, top: 9),
+      padding: mediumPadding,
       child: CustomCard(
         child: Container(
           height: 50,
