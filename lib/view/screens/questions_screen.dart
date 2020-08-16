@@ -13,7 +13,7 @@ import 'package:reff_web/view/widgets/custom_card.dart';
 import 'package:reff_web/view/widgets/edit_question_widgets.dart';
 
 final questionsFromApi =
-    StreamProvider((_) => locator<BaseApi>().question.getsStream());
+    StreamProvider((_) => locator<BaseApi>().question.gets());
 
 class QuestionsScreen extends HookWidget {
   static const route = "/questions";
@@ -38,7 +38,7 @@ class QuestionsScreen extends HookWidget {
             child: questionsStream.when(
                 data: (questions) => CustomCard(
                       child: DataTable(
-                          columns: ["Header", "Date", ""]
+                          columns: ["Header", "Start Date", "End Date", ""]
                               .map((e) => DataColumn(
                                     label: Text(e,
                                         style: TextStyle(
@@ -56,7 +56,9 @@ class QuestionsScreen extends HookWidget {
                                             : FontWeight.w100),
                                   )),
                                   DataCell(Text(DateFormat("HH:mm - dd.MM.yyyy")
-                                      .format(question.timeStamp))),
+                                      .format(question.startDate))),
+                                  DataCell(Text(DateFormat("HH:mm - dd.MM.yyyy")
+                                      .format(question.endDate))),
                                   DataCell(Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
@@ -151,9 +153,10 @@ class QuestionsScreenFloatingActionButton extends HookWidget {
               questionState.initialize(
                   answers: <AnswerModel>[],
                   question: QuestionModel(
-                      countryCode: "tr",
+                      city: CityModel.CITIES.first,
                       header: "",
-                      timeStamp: DateTime.now()));
+                      startDate: DateTime.now(),
+                      endDate: DateTime.now().add(Duration(days: 2))));
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => EditQuestionScreen()),

@@ -71,7 +71,7 @@ class AnswerList extends HookWidget {
                     final answer = questionProvider.answers[index];
 
                     return CustomCard(
-                      color: answer.color.color().withOpacity(0.5),
+                      color: answer.color.toColor().withOpacity(0.5),
                       child: ListTile(
                         dense: true,
                         title: Text(answer.content),
@@ -172,7 +172,7 @@ class _SomeWidgetState extends State<EditAnswerDialog> {
                 width: double.maxFinite,
                 margin: smallPadding,
                 child: Card(
-                  color: answerState.value.color.color(),
+                  color: answerState.value.color.toColor(),
                   child: Padding(
                     padding: smallPadding,
                     child: Text((answerState.value.content == null ||
@@ -254,7 +254,52 @@ class EditColorPicker extends HookWidget {
   }
 }
 
-class DatePicker extends HookWidget {
+//class TimePicker extends HookWidget {
+//  const TimePicker({Key key}) : super(key: key);
+//
+//  @override
+//  Widget build(BuildContext context) {
+//    final questionProvider = useProvider(questionChangeNotifierProvider);
+//
+//    return CustomCard(
+//      child: Padding(
+//        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+//        child: RaisedButton.icon(
+//            color: Colors.blueGrey,
+//            onPressed: () async {
+//              final time = await showTimePicker(
+//                      initialEntryMode: TimePickerEntryMode.input,
+//                      context: context,
+//                      initialTime: TimeOfDay.fromDateTime(
+//                              questionProvider.question.startDate) ??
+//                          TimeOfDay.now()) ??
+//                  TimeOfDay.now();
+//
+//              questionProvider.updateTime(time);
+//            },
+//            icon: Icon(Icons.timelapse),
+//            label: Text("Time Picker")),
+//      ),
+//    );
+//  }
+//}
+
+class DateTimePicker extends HookWidget {
+  final String label;
+
+  final DateTime initialDateTime;
+  final TimeOfDay initialTimeOfDate;
+
+  final ValueChanged<DateTime> onChangedDateTime;
+  final ValueChanged<TimeOfDay> onChangedTimeOfDay;
+
+  DateTimePicker(
+      {@required this.initialDateTime,
+      @required this.initialTimeOfDate,
+      @required this.onChangedDateTime,
+      @required this.onChangedTimeOfDay,
+      @required this.label});
+
   String _dateTimeFormat(DateTime dateTime) {
     final format = DateFormat("dd.MM.yyyy");
     return format.format(dateTime);
@@ -271,16 +316,24 @@ class DatePicker extends HookWidget {
             color: Colors.blueGrey,
             onPressed: () async {
               final dateTime = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(Duration(days: 365)),
-                  ) ??
+                      context: context,
+                      initialDate: this.initialDateTime,
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(Duration(days: 365))) ??
                   DateTime.now();
-              questionProvider.updateDate(dateTime);
+
+              this.onChangedDateTime(dateTime);
+
+              final timeOfDay = await showTimePicker(
+                    context: context,
+                    initialTime: this.initialTimeOfDate,
+                  ) ??
+                  TimeOfDay.now();
+
+              this.onChangedTimeOfDay(timeOfDay);
             },
             icon: Icon(Icons.date_range),
-            label: Text(_dateTimeFormat(questionProvider.question.timeStamp))),
+            label: Text(this.label)),
       ),
     );
   }
@@ -444,24 +497,24 @@ class IsActiveQuestion extends HookWidget {
   }
 }
 
-class CountryPicker extends HookWidget {
-  CountryPicker(
-      {@required this.initialCountry,
-      @required this.countries,
+class CityPicker extends HookWidget {
+  CityPicker(
+      {@required this.initialCity,
+      @required this.cities,
       @required this.onChanged});
-  final List<CountryModel> countries;
-  final CountryModel initialCountry;
-  final ValueChanged<CountryModel> onChanged;
+  final List<CityModel> cities;
+  final CityModel initialCity;
+  final ValueChanged<CityModel> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return CustomCard(
-      child: SearchableDropdown<CountryModel>.single(
-        value: this.initialCountry ?? countries.first,
-        items: countries
-            .map((country) => DropdownMenuItem(
-                  child: Text(country.name),
-                  value: country,
+      child: SearchableDropdown<CityModel>.single(
+        value: this.initialCity ?? cities.first,
+        items: cities
+            .map((city) => DropdownMenuItem(
+                  child: Text(city.name),
+                  value: city,
                 ))
             .toList(),
         onChanged: (value) {

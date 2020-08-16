@@ -55,11 +55,42 @@ class QuestionChangeNotifier with ChangeNotifier {
 //    _logger.info("onReorderAnswerList | tercih sırası değiştirildi");
 //  }
 
-  void updateDate(DateTime dateTime) {
-    this.question = this.question.copyWith.call(timeStamp: dateTime);
+  void updateDateRange(DateTime startDate, DateTime endDate) {
+    this.question =
+        this.question.copyWith.call(startDate: startDate, endDate: endDate);
     notifyListeners();
-    _logger.info("changeDate | tarih değişti");
+    _logger.info("updateDateRange | tarih değişti");
   }
+
+  void updateStartDate(DateTime startDate) {
+    this.question = this.question.copyWith.call(startDate: startDate);
+    notifyListeners();
+    _logger.info("updateStartDate | tarih değişti");
+  }
+
+  void updateEndDate(DateTime endDate) {
+    this.question = this.question.copyWith.call(endDate: endDate);
+    notifyListeners();
+    _logger.info("updateEndDate | tarih değişti");
+  }
+
+//  void updateTime(TimeOfDay time) {
+//    final newStartDate = this
+//        .question
+//        .startDate
+//        .add(Duration(hours: time.hour, minutes: time.minute));
+//    final newEndDate = this
+//        .question
+//        .endDate
+//        .add(Duration(hours: time.hour, minutes: time.minute));
+//
+//    this.question = this
+//        .question
+//        .copyWith
+//        .call(startDate: newStartDate, endDate: newEndDate);
+//    notifyListeners();
+//    _logger.info("updateTime | tarih değişti");
+//  }
 
   void updateImageUrl(String imageUrl) {
     this.question = this.question.copyWith.call(imageUrl: imageUrl);
@@ -89,10 +120,10 @@ class QuestionChangeNotifier with ChangeNotifier {
     _logger.info("updateActive | $value");
   }
 
-  void updateCountry(CountryModel country) {
-    this.question = this.question.copyWith.call(countryCode: country.code);
+  void updateCity(CityModel city) {
+    this.question = this.question.copyWith.call(city: city);
     notifyListeners();
-    _logger.info("updateCountry | ${country.code}");
+    _logger.info("updateCity | ${city.name}");
   }
 
   void removeAnswer(AnswerModel answer) {

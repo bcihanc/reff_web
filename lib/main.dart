@@ -28,19 +28,18 @@ class MyApp extends HookWidget {
     final auth = useProvider(authState);
 
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Reff Panel',
-      theme: ThemeData.dark()
-          .copyWith(primaryColor: Colors.blueGrey, accentColor: Colors.cyan),
-      home: auth.when(
-          data: (data) {
-            return (data?.uid != null)
-                ? QuestionsScreen()
-                : Scaffold(body: LoginScreen());
-          },
-          loading: () =>
-              Scaffold(body: Center(child: CircularProgressIndicator())),
-          error: (err, stack) => Text('$err')),
-    );
+        debugShowCheckedModeBanner: false,
+        title: 'Reff Panel',
+        theme: ThemeData.dark()
+            .copyWith(primaryColor: Colors.blueGrey, accentColor: Colors.cyan),
+        home: auth.when(
+            data: (data) {
+              return (data?.uid != null)
+                  ? QuestionsScreen()
+                  : Scaffold(body: LoginScreen());
+            },
+            loading: () =>
+                Scaffold(body: Center(child: CircularProgressIndicator())),
+            error: (err, stack) => Text('$err')));
   }
 }

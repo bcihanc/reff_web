@@ -76,19 +76,52 @@ class EditQuestionScreen extends HookWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                CountryPicker(
-                  countries: CountryModel.COUNTRIES,
-                  initialCountry: CountryModel.COUNTRIES.singleWhere(
-                      (country) =>
-                          country.code ==
-                          questionProvider.question.countryCode),
-                  onChanged: (CountryModel country) =>
-                      questionProvider.updateCountry(country),
+                CityPicker(
+                  cities: CityModel.CITIES,
+                  initialCity: CityModel.CITIES.singleWhere(
+                      (city) => city == questionProvider.question.city),
+                  onChanged: (CityModel city) =>
+                      questionProvider.updateCity(city),
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    DatePicker(),
+                    DateTimePicker(
+                      label: "Start Date",
+                      initialDateTime:
+                          questionProvider.question.startDate ?? DateTime.now(),
+                      initialTimeOfDate: TimeOfDay.fromDateTime(
+                              questionProvider.question.startDate) ??
+                          TimeOfDay.now(),
+                      onChangedDateTime: (DateTime value) =>
+                          questionProvider.updateStartDate(value),
+                      onChangedTimeOfDay: (TimeOfDay value) {
+                        final date = questionProvider.question.startDate;
+                        final pureDate =
+                            DateTime(date.year, date.month, date.day);
+                        final addedTimeOfDay = pureDate.add(
+                            Duration(minutes: value.minute, hours: value.hour));
+                        questionProvider.updateStartDate(addedTimeOfDay);
+                      },
+                    ),
+                    DateTimePicker(
+                      label: "End Date",
+                      initialDateTime:
+                          questionProvider.question.endDate ?? DateTime.now(),
+                      initialTimeOfDate: TimeOfDay.fromDateTime(
+                              questionProvider.question.endDate) ??
+                          TimeOfDay.now(),
+                      onChangedDateTime: (DateTime value) =>
+                          questionProvider.updateEndDate(value),
+                      onChangedTimeOfDay: (TimeOfDay value) {
+                        final date = questionProvider.question.endDate;
+                        final pureDate =
+                            DateTime(date.year, date.month, date.day);
+                        final addedTimeOfDay = pureDate.add(
+                            Duration(minutes: value.minute, hours: value.hour));
+                        questionProvider.updateEndDate(addedTimeOfDay);
+                      },
+                    ),
                     IsActiveQuestion(
                       initialValue: questionProvider.question.isActive,
                       onChanged: (value) =>
