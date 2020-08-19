@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logging/logging.dart';
-import 'package:reff_shared/core/models/CityModel.dart';
+import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_web/core/providers/main_provider.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
@@ -24,13 +24,13 @@ class EditQuestionScreen extends HookWidget {
 
     _logger.info("build");
     final questionProvider = useProvider(questionChangeNotifierProvider);
-    final busyState = useProvider(busyStateProvider.state);
+    final busyState = useProvider(busyStateProvider);
 
     return Scaffold(
       appBar: AppBar(
           flexibleSpace: Align(
               alignment: Alignment.centerRight,
-              child: busyState
+              child: busyState.isBusy
                   ? Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: CircularProgressIndicator(),
@@ -57,13 +57,13 @@ class EditQuestionScreen extends HookWidget {
                           Scaffold.of(context).showSnackBar(SnackBar(
                               content: Text('En az 2 tercih eklemelisin')));
                         } else {
-                          busyStateProvider.read(context).busy();
+                          busyState.busy();
                           final result = await questionProvider.saveToFirebase(
                               validation: _validation());
-                          busyStateProvider.read(context).notBusy();
                           if (result) {
                             Navigator.pop(context);
                           }
+                          busyState.notBusy();
                         }
                       }),
                 ],
@@ -90,18 +90,21 @@ class EditQuestionScreen extends HookWidget {
                       label: "Start Date",
                       initialDateTime:
                           questionProvider.question.startDate ?? DateTime.now(),
-                      initialTimeOfDate: TimeOfDay.fromDateTime(
-                              questionProvider.question.startDate) ??
+                      initialTimeOfDate: TimeOfDay.fromDateTime(questionProvider
+                              .question.startDate
+                              .toDateTime()) ??
                           TimeOfDay.now(),
-                      onChangedDateTime: (DateTime value) =>
+                      onChangedDateTime: (int value) =>
                           questionProvider.updateStartDate(value),
                       onChangedTimeOfDay: (TimeOfDay value) {
-                        final date = questionProvider.question.startDate;
+                        final date =
+                            questionProvider.question.startDate.toDateTime();
                         final pureDate =
                             DateTime(date.year, date.month, date.day);
                         final addedTimeOfDay = pureDate.add(
                             Duration(minutes: value.minute, hours: value.hour));
-                        questionProvider.updateStartDate(addedTimeOfDay);
+                        questionProvider.updateStartDate(
+                            addedTimeOfDay.millisecondsSinceEpoch);
                       },
                     ),
                     DateTimePicker(
@@ -109,17 +112,19 @@ class EditQuestionScreen extends HookWidget {
                       initialDateTime:
                           questionProvider.question.endDate ?? DateTime.now(),
                       initialTimeOfDate: TimeOfDay.fromDateTime(
-                              questionProvider.question.endDate) ??
+                              questionProvider.question.endDate.toDateTime()) ??
                           TimeOfDay.now(),
-                      onChangedDateTime: (DateTime value) =>
+                      onChangedDateTime: (int value) =>
                           questionProvider.updateEndDate(value),
                       onChangedTimeOfDay: (TimeOfDay value) {
-                        final date = questionProvider.question.endDate;
+                        final date =
+                            questionProvider.question.endDate.toDateTime();
                         final pureDate =
                             DateTime(date.year, date.month, date.day);
                         final addedTimeOfDay = pureDate.add(
                             Duration(minutes: value.minute, hours: value.hour));
-                        questionProvider.updateEndDate(addedTimeOfDay);
+                        questionProvider.updateEndDate(
+                            addedTimeOfDay.millisecondsSinceEpoch);
                       },
                     ),
                     IsActiveQuestion(

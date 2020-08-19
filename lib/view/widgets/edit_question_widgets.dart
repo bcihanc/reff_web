@@ -287,10 +287,10 @@ class EditColorPicker extends HookWidget {
 class DateTimePicker extends HookWidget {
   final String label;
 
-  final DateTime initialDateTime;
+  final int initialDateTime;
   final TimeOfDay initialTimeOfDate;
 
-  final ValueChanged<DateTime> onChangedDateTime;
+  final ValueChanged<int> onChangedDateTime;
   final ValueChanged<TimeOfDay> onChangedTimeOfDay;
 
   DateTimePicker(
@@ -300,15 +300,8 @@ class DateTimePicker extends HookWidget {
       @required this.onChangedTimeOfDay,
       @required this.label});
 
-  String _dateTimeFormat(DateTime dateTime) {
-    final format = DateFormat("dd.MM.yyyy");
-    return format.format(dateTime);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final questionProvider = useProvider(questionChangeNotifierProvider);
-
     return CustomCard(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
@@ -317,12 +310,12 @@ class DateTimePicker extends HookWidget {
             onPressed: () async {
               final dateTime = await showDatePicker(
                       context: context,
-                      initialDate: this.initialDateTime,
+                      initialDate: this.initialDateTime.toDateTime(),
                       firstDate: DateTime.now(),
                       lastDate: DateTime.now().add(Duration(days: 365))) ??
                   DateTime.now();
 
-              this.onChangedDateTime(dateTime);
+              this.onChangedDateTime(dateTime.millisecondsSinceEpoch);
 
               final timeOfDay = await showTimePicker(
                     context: context,
@@ -391,7 +384,7 @@ class ImageUrlField extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _controller = useTextEditingController();
+    final _controller = useTextEditingController(text: this.initialValue);
     final questionProvider = useProvider(questionChangeNotifierProvider);
 
     return CustomCard(

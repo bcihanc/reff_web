@@ -1,10 +1,18 @@
+import 'package:flutter/foundation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:state_notifier/state_notifier.dart';
 
-class BusyState extends StateNotifier<bool> {
-  BusyState() : super(false);
-  busy() => state = true;
-  notBusy() => state = false;
+class BusyState extends ChangeNotifier {
+  bool _isBusy = false;
+  get isBusy => this._isBusy;
+  busy() {
+    _isBusy = true;
+    notifyListeners();
+  }
+
+  notBusy() {
+    _isBusy = false;
+    notifyListeners();
+  }
 }
 
-final busyStateProvider = StateNotifierProvider((_) => BusyState());
+final busyStateProvider = ChangeNotifierProvider((_) => BusyState());

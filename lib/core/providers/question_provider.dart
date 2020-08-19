@@ -55,42 +55,17 @@ class QuestionChangeNotifier with ChangeNotifier {
 //    _logger.info("onReorderAnswerList | tercih sırası değiştirildi");
 //  }
 
-  void updateDateRange(DateTime startDate, DateTime endDate) {
-    this.question =
-        this.question.copyWith.call(startDate: startDate, endDate: endDate);
-    notifyListeners();
-    _logger.info("updateDateRange | tarih değişti");
-  }
-
-  void updateStartDate(DateTime startDate) {
+  void updateStartDate(int startDate) {
     this.question = this.question.copyWith.call(startDate: startDate);
     notifyListeners();
     _logger.info("updateStartDate | tarih değişti");
   }
 
-  void updateEndDate(DateTime endDate) {
+  void updateEndDate(int endDate) {
     this.question = this.question.copyWith.call(endDate: endDate);
     notifyListeners();
     _logger.info("updateEndDate | tarih değişti");
   }
-
-//  void updateTime(TimeOfDay time) {
-//    final newStartDate = this
-//        .question
-//        .startDate
-//        .add(Duration(hours: time.hour, minutes: time.minute));
-//    final newEndDate = this
-//        .question
-//        .endDate
-//        .add(Duration(hours: time.hour, minutes: time.minute));
-//
-//    this.question = this
-//        .question
-//        .copyWith
-//        .call(startDate: newStartDate, endDate: newEndDate);
-//    notifyListeners();
-//    _logger.info("updateTime | tarih değişti");
-//  }
 
   void updateImageUrl(String imageUrl) {
     this.question = this.question.copyWith.call(imageUrl: imageUrl);

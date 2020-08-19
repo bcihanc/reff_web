@@ -22,12 +22,12 @@ class QuestionsScreen extends HookWidget {
   Widget build(BuildContext context) {
     final _dateTime = useState(DateTime.now());
 
-    final busyState = useProvider(busyStateProvider.state);
+    final busyState = useProvider(busyStateProvider);
     final questionState = useProvider(questionChangeNotifierProvider);
 
     final questionsStream = useProvider(questionsFromApi);
     return Scaffold(
-      appBar: _appBar(busyState),
+      appBar: _appBar(busyState.isBusy),
       floatingActionButton: QuestionsScreenFloatingActionButton(),
       body: Column(
         children: [
@@ -38,7 +38,7 @@ class QuestionsScreen extends HookWidget {
             child: questionsStream.when(
                 data: (questions) => CustomCard(
                       child: DataTable(
-                          columns: ["Header", "Start Date", "End Date", ""]
+                          columns: ["Question", "Start Date", "End Date", ""]
                               .map((e) => DataColumn(
                                     label: Text(e,
                                         style: TextStyle(
@@ -56,23 +56,21 @@ class QuestionsScreen extends HookWidget {
                                             : FontWeight.w100),
                                   )),
                                   DataCell(Text(DateFormat("HH:mm - dd.MM.yyyy")
-                                      .format(question.startDate))),
+                                      .format(
+                                          question.startDate.toDateTime()))),
                                   DataCell(Text(DateFormat("HH:mm - dd.MM.yyyy")
-                                      .format(question.endDate))),
+                                      .format(question.endDate.toDateTime()))),
                                   DataCell(Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
                                       IconButton(
+                                        icon: Icon(Icons.edit),
                                         onPressed: () async {
-                                          busyStateProvider
-                                              .read(context)
-                                              .busy();
+                                          busyState.busy();
                                           final api = locator<BaseApi>();
                                           final answers = await api.answer
                                               .gets(question.answers);
-                                          busyStateProvider
-                                              .read(context)
-                                              .notBusy();
+                                          busyState.notBusy();
 
                                           questionState.initialize(
                                               answers: answers,
@@ -85,20 +83,15 @@ class QuestionsScreen extends HookWidget {
                                                     EditQuestionScreen()),
                                           );
                                         },
-                                        icon: Icon(Icons.edit),
                                       ),
                                       IconButton(
                                         onPressed: () async {
-                                          busyStateProvider
-                                              .read(context)
-                                              .busy();
+                                          busyState.busy();
 
                                           await locator<BaseApi>()
                                               .question
                                               .remove(question.id);
-                                          busyStateProvider
-                                              .read(context)
-                                              .notBusy();
+                                          busyState.notBusy();
                                         },
                                         icon: Icon(Icons.delete),
                                       ),
@@ -139,12 +132,6 @@ class QuestionsScreenFloatingActionButton extends HookWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-//        FloatingActionButton(
-//            heroTag: "date",
-//            backgroundColor: Colors.blueGrey,
-//            child: Icon(Icons.date_range),
-//            onPressed: () {}),
-//        Divider(color: Colors.transparent),
         FloatingActionButton(
             heroTag: "add",
             child: Icon(Icons.add),
@@ -155,8 +142,10 @@ class QuestionsScreenFloatingActionButton extends HookWidget {
                   question: QuestionModel(
                       city: CityModel.CITIES.first,
                       header: "",
-                      startDate: DateTime.now(),
-                      endDate: DateTime.now().add(Duration(days: 2))));
+                      startDate: DateTime.now().millisecondsSinceEpoch,
+                      endDate: DateTime.now()
+                          .add(Duration(days: 2))
+                          .millisecondsSinceEpoch));
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => EditQuestionScreen()),
