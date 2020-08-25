@@ -77,8 +77,8 @@ class EditQuestionScreen extends HookWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 CityPicker(
-                  cities: CityModel.CITIES,
-                  initialCity: CityModel.CITIES.singleWhere(
+                  cities: CityModel.cities,
+                  initialCity: CityModel.cities.singleWhere(
                       (city) => city == questionProvider.question.city),
                   onChanged: (CityModel city) =>
                       questionProvider.updateCity(city),

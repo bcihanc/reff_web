@@ -140,7 +140,7 @@ class QuestionsScreenFloatingActionButton extends HookWidget {
               questionState.initialize(
                   answers: <AnswerModel>[],
                   question: QuestionModel(
-                      city: CityModel.CITIES.first,
+                      city: CityModel.cities.first,
                       header: "",
                       startDate: DateTime.now().millisecondsSinceEpoch,
                       endDate: DateTime.now()
