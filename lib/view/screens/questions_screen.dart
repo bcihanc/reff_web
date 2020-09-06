@@ -4,8 +4,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_shared/core/services/api.dart';
-import 'package:reff_web/core/locator.dart';
-import 'package:reff_web/core/providers/main_provider.dart';
+import 'package:reff_web/core/utils/locator.dart';
+import 'package:reff_web/core/providers/providers.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
 import 'package:reff_web/view/screens/edit_question_screen.dart';
@@ -20,9 +20,7 @@ class QuestionsScreen extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _dateTime = useState(DateTime.now());
-
-    final busyState = useProvider(busyStateProvider);
+    final busyState = useProvider(BusyState.busyStateProvider);
     final questionState = useProvider(questionChangeNotifierProvider);
 
     final questionsStream = useProvider(questionsFromApi);

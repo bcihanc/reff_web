@@ -17,8 +17,6 @@ class AddAnswerButton extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final questionProvider = useProvider(questionChangeNotifierProvider);
-
     return Container(
       alignment: Alignment.centerRight,
       padding: xsmallPadding,

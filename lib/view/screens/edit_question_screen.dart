@@ -3,7 +3,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:reff_shared/core/models/models.dart';
-import 'package:reff_web/core/providers/main_provider.dart';
+import 'package:reff_web/core/providers/providers.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
 import 'package:reff_web/view/widgets/edit_question_widgets.dart';
@@ -24,7 +24,7 @@ class EditQuestionScreen extends HookWidget {
 
     _logger.info("build");
     final questionProvider = useProvider(questionChangeNotifierProvider);
-    final busyState = useProvider(busyStateProvider);
+    final busyState = useProvider(BusyState.busyStateProvider);
 
     return Scaffold(
       appBar: AppBar(

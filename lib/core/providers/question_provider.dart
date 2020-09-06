@@ -3,7 +3,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_shared/core/services/api.dart';
-import 'package:reff_web/core/locator.dart';
+import 'package:reff_web/core/utils/locator.dart';
 import 'package:reff_web/core/models/Unions.dart';
 
 final questionChangeNotifierProvider =
