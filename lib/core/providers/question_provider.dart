@@ -6,22 +6,23 @@ import 'package:reff_shared/core/services/api.dart';
 import 'package:reff_web/core/utils/locator.dart';
 import 'package:reff_web/core/models/Unions.dart';
 
-final questionChangeNotifierProvider =
-    ChangeNotifierProvider((ref) => QuestionChangeNotifier(ref));
-
-final filterChangeNotifierProvider =
-    ChangeNotifierProvider((ref) => FilterChangeNotifier());
-
-class FilterChangeNotifier with ChangeNotifier {
+class FilterChangeNotifier extends ChangeNotifier {
+  static final provider =
+      ChangeNotifierProvider((ref) => FilterChangeNotifier());
   DateTime _dateTime = DateTime.now();
-  DateTime get dateTime => this._dateTime;
+  DateTime get dateTime => _dateTime;
   void setDateTime(DateTime dateTime) {
-    this._dateTime = dateTime;
+    _dateTime = dateTime;
     notifyListeners();
   }
 }
 
-class QuestionChangeNotifier with ChangeNotifier {
+class QuestionChangeNotifier extends ChangeNotifier {
+  QuestionChangeNotifier(this.ref);
+
+  static final provider =
+      ChangeNotifierProvider((ref) => QuestionChangeNotifier(ref));
+
   final _logger = Logger("QuestionProvider");
   final api = locator<BaseApi>();
 
@@ -30,17 +31,15 @@ class QuestionChangeNotifier with ChangeNotifier {
   QuestionExistsState questionExistsState;
   final ProviderReference ref;
 
-  QuestionChangeNotifier(this.ref);
-
   void initialize(
       {@required QuestionModel question, @required List<AnswerModel> answers}) {
     this.question = question;
     this.answers = answers;
 
-    this.questionExistsState = (question?.id != null)
+    questionExistsState = (question?.id != null)
         ? QuestionExistsState.exsist()
         : QuestionExistsState.notExsist();
-    _logger.info("initialized complete");
+    _logger.info("initialized complete : ${question.toString()}");
   }
 
 //  void onReorderAnswerListToModel(int oldIndex, int newIndex) {
@@ -56,60 +55,60 @@ class QuestionChangeNotifier with ChangeNotifier {
 //  }
 
   void updateStartDate(int startDate) {
-    this.question = this.question.copyWith.call(startDate: startDate);
+    question = question.copyWith.call(startDate: startDate);
     notifyListeners();
     _logger.info("updateStartDate | tarih değişti");
   }
 
   void updateEndDate(int endDate) {
-    this.question = this.question.copyWith.call(endDate: endDate);
+    question = question.copyWith.call(endDate: endDate);
     notifyListeners();
     _logger.info("updateEndDate | tarih değişti");
   }
 
   void updateImageUrl(String imageUrl) {
-    this.question = this.question.copyWith.call(imageUrl: imageUrl);
+    question = question.copyWith.call(imageUrl: imageUrl);
     notifyListeners(); // resim için build çalışması şart
     _logger.info("changeImageUrl | imageUrl değişti");
   }
 
   void updateHeader(String header) {
-    this.question = this.question.copyWith.call(header: header);
+    question = question.copyWith.call(header: header);
     _logger.info("changeHeader | header değişti");
   }
 
   void updateContent(String content) {
-    this.question = this.question.copyWith.call(content: content);
+    question = question.copyWith.call(content: content);
     _logger.info("changeContent | content değişti");
   }
 
   void addAnswer(AnswerModel answer) {
-    this.answers.add(answer);
+    answers.add(answer);
     notifyListeners();
     _logger.info("addAnswer | yeni tercih eklendi");
   }
 
-  void updateActive(bool value) {
-    this.question = this.question.copyWith.call(isActive: value);
+  void updateActive({bool activate}) {
+    question = question.copyWith.call(isActive: activate);
     notifyListeners();
-    _logger.info("updateActive | $value");
+    _logger.info("updateActive | $activate");
   }
 
   void updateCity(CityModel city) {
-    this.question = this.question.copyWith.call(city: city);
+    question = question.copyWith.call(city: city);
     notifyListeners();
     _logger.info("updateCity | ${city.name}");
   }
 
   void removeAnswer(AnswerModel answer) {
-    if (this.answers.contains(answer)) {
-      final result = this.answers.remove(answer);
+    if (answers.contains(answer)) {
+      final result = answers.remove(answer);
 
       if (answer.id != null) {
         final willRemoveAnswerID =
-            this.question.answers.firstWhere((element) => element == answer.id);
+            question.answers.firstWhere((element) => element == answer.id);
 
-        this.question.answers.remove(willRemoveAnswerID);
+        question.answers.remove(willRemoveAnswerID);
       }
 
       result
@@ -120,7 +119,7 @@ class QuestionChangeNotifier with ChangeNotifier {
   }
 
   void updateAnswer(AnswerModel original, AnswerModel newAnswer) {
-    final index = this.answers.indexOf(original);
+    final index = answers.indexOf(original);
     if (!index.isNegative && original != newAnswer) {
       answers.removeAt(index);
       answers.insert(index, newAnswer);
@@ -132,15 +131,15 @@ class QuestionChangeNotifier with ChangeNotifier {
   }
 
   Future<bool> saveToFirebase({@required bool validation}) async {
-    if (this.answers.isNotEmpty && validation) {
-      await this.questionExistsState.when(
+    if (answers.isNotEmpty && validation) {
+      await questionExistsState.when(
         // yeni bir question kaydedilirken
         notExsist: () async {
-          final ids = await api.answer.adds(this.answers);
+          final ids = await api.answer.adds(answers);
           _logger.info('saveAll : ${ids.length} adet tercih kaydedildi');
 
-          final question = this.question.copyWith.call(answers: ids);
-          final questionID = await api.question.add(question);
+          final newQuestion = question.copyWith.call(answers: ids);
+          final questionID = await api.question.add(newQuestion);
           _logger.info('saveAll : yeni bir soru yaratıldı $questionID');
         },
 
@@ -148,27 +147,28 @@ class QuestionChangeNotifier with ChangeNotifier {
         exsist: () async {
           final newAnswers = <AnswerModel>[];
 
-          for (final answer in this.answers) {
+          for (final answer in answers) {
             if (answer.id != null) {
               await api.answer.update(answer.id, answer);
-              await api.question.update(this.question.id, this.question);
+              await api.question.update(question.id, question);
             } else {
               newAnswers.add(answer);
-              this.answers.remove(answer);
+              answers.remove(answer);
             }
             if (newAnswers.isNotEmpty) {
               final ids = await api.answer.adds(newAnswers);
-              this.question.answers.addAll(ids);
+              question.answers.addAll(ids);
             }
 
-            await api.question.update(this.question.id, this.question);
+            await api.question.update(question.id, question);
           }
           _logger.info('updateAnswerToFirebase tercihler güncellendi');
         },
       );
       return true;
-    } else
+    } else {
       _logger.warning("saveToFirebase validaston hatası");
+    }
     return false;
   }
 }

@@ -32,7 +32,7 @@ class AddAnswerButton extends HookWidget {
 class AnswerList extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final questionProvider = useProvider(questionChangeNotifierProvider);
+    final questionProvider = useProvider(QuestionChangeNotifier.provider);
 
     return CustomCard(
       child: Padding(
@@ -121,7 +121,7 @@ class ContentField extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = useTextEditingController(text: this.initialValue);
+    final controller = useTextEditingController(text: initialValue);
 
     return CustomCard(
         child: Padding(
@@ -197,10 +197,10 @@ class _SomeWidgetState extends State<EditAnswerDialog> {
                     ),
                   )),
               EditColorPicker(
-                onChanged: (Color value) {
-                  if (value != null) {
+                onChanged: (color) {
+                  if (color != null) {
                     answerState.value =
-                        answerState.value.copyWith.call(color: value.myColor());
+                        answerState.value.copyWith.call(color: color.myColor());
                   }
                 },
               ),
@@ -308,23 +308,23 @@ class DateTimePicker extends HookWidget {
             onPressed: () async {
               final dateTime = await showDatePicker(
                       context: context,
-                      initialDate: this.initialDateTime.toDateTime(),
+                      initialDate: initialDateTime.toDateTime(),
                       firstDate: DateTime.now(),
                       lastDate: DateTime.now().add(Duration(days: 365))) ??
                   DateTime.now();
 
-              this.onChangedDateTime(dateTime.millisecondsSinceEpoch);
+              onChangedDateTime(dateTime.millisecondsSinceEpoch);
 
               final timeOfDay = await showTimePicker(
                     context: context,
-                    initialTime: this.initialTimeOfDate,
+                    initialTime: initialTimeOfDate,
                   ) ??
                   TimeOfDay.now();
 
-              this.onChangedTimeOfDay(timeOfDay);
+              onChangedTimeOfDay(timeOfDay);
             },
             icon: Icon(Icons.date_range),
-            label: Text(this.label)),
+            label: Text(label)),
       ),
     );
   }
@@ -341,7 +341,7 @@ class HeaderField extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = useTextEditingController(text: this.initialValue);
+    final controller = useTextEditingController(text: initialValue);
 
     return CustomCard(
       child: Padding(
@@ -350,7 +350,7 @@ class HeaderField extends HookWidget {
           key: formState,
           child: TextFormField(
               controller: controller,
-              onChanged: this.onChanged,
+              onChanged: onChanged,
               validator: (value) {
                 if (value.isEmpty || value == "") {
                   return "Başlık boş olamaz";
@@ -382,8 +382,8 @@ class ImageUrlField extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _controller = useTextEditingController(text: this.initialValue);
-    final questionProvider = useProvider(questionChangeNotifierProvider);
+    final _controller = useTextEditingController(text: initialValue);
+    final questionProvider = useProvider(QuestionChangeNotifier.provider);
 
     return CustomCard(
       child: Padding(
@@ -439,7 +439,7 @@ class ImageUrlField extends HookWidget {
 class IdShower extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final questionProvider = useProvider(questionChangeNotifierProvider);
+    final questionProvider = useProvider(QuestionChangeNotifier.provider);
 
     var idTextWidget = (questionProvider.question.id != null)
         ? QuestionExistsState.exsist()
@@ -477,9 +477,9 @@ class IsActiveQuestion extends HookWidget {
             Text('Yayın'),
             Switch(
                 value: valueState.value,
-                onChanged: (bool value) {
-                  valueState.value = value;
-                  onChanged(value);
+                onChanged: (active) {
+                  valueState.value = active;
+                  onChanged(active);
                 }),
           ],
         ),
@@ -501,17 +501,14 @@ class CityPicker extends HookWidget {
   Widget build(BuildContext context) {
     return CustomCard(
       child: SearchableDropdown<CityModel>.single(
-        value: this.initialCity ?? cities.first,
-        items: cities
-            .map((city) => DropdownMenuItem(
-                  child: Text(city.name),
-                  value: city,
-                ))
-            .toList(),
-        onChanged: (value) {
-          onChanged(value);
-        },
-      ),
+          value: initialCity ?? cities.first,
+          items: cities
+              .map((city) => DropdownMenuItem(
+                    child: Text(city.name),
+                    value: city,
+                  ))
+              .toList(),
+          onChanged: onChanged),
     );
   }
 }
@@ -521,7 +518,7 @@ class FilterBar extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _filterChangeNotifier = useProvider(filterChangeNotifierProvider);
+    final _filterChangeNotifier = useProvider(FilterChangeNotifier.provider);
 
     return Padding(
       padding: mediumPadding,

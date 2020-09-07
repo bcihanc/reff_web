@@ -23,14 +23,14 @@ class EditQuestionScreen extends HookWidget {
         imageURLFormState.currentState.validate();
 
     _logger.info("build");
-    final questionProvider = useProvider(questionChangeNotifierProvider);
-    final busyState = useProvider(BusyState.busyStateProvider);
+    final questionProvider = useProvider(QuestionChangeNotifier.provider);
+    final busyState = useProvider(BusyState.provider.state);
 
     return Scaffold(
       appBar: AppBar(
           flexibleSpace: Align(
               alignment: Alignment.centerRight,
-              child: busyState.isBusy
+              child: busyState
                   ? Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: CircularProgressIndicator(),
@@ -57,13 +57,15 @@ class EditQuestionScreen extends HookWidget {
                           Scaffold.of(context).showSnackBar(SnackBar(
                               content: Text('En az 2 tercih eklemelisin')));
                         } else {
-                          busyState.busy();
+                          context.read(BusyState.provider).busy();
+
                           final result = await questionProvider.saveToFirebase(
                               validation: _validation());
                           if (result) {
                             Navigator.pop(context);
                           }
-                          busyState.notBusy();
+
+                          context.read(BusyState.provider).notBusy();
                         }
                       }),
                 ],
@@ -77,12 +79,10 @@ class EditQuestionScreen extends HookWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 CityPicker(
-                  cities: CityModel.cities,
-                  initialCity: CityModel.cities.singleWhere(
-                      (city) => city == questionProvider.question.city),
-                  onChanged: (CityModel city) =>
-                      questionProvider.updateCity(city),
-                ),
+                    cities: CityModel.cities,
+                    initialCity: CityModel.cities.singleWhere(
+                        (city) => city == questionProvider.question.city),
+                    onChanged: questionProvider.updateCity),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -94,15 +94,14 @@ class EditQuestionScreen extends HookWidget {
                               .question.startDate
                               .toDateTime()) ??
                           TimeOfDay.now(),
-                      onChangedDateTime: (int value) =>
-                          questionProvider.updateStartDate(value),
-                      onChangedTimeOfDay: (TimeOfDay value) {
+                      onChangedDateTime: questionProvider.updateStartDate,
+                      onChangedTimeOfDay: (timeOfDay) {
                         final date =
                             questionProvider.question.startDate.toDateTime();
                         final pureDate =
                             DateTime(date.year, date.month, date.day);
-                        final addedTimeOfDay = pureDate.add(
-                            Duration(minutes: value.minute, hours: value.hour));
+                        final addedTimeOfDay = pureDate.add(Duration(
+                            minutes: timeOfDay.minute, hours: timeOfDay.hour));
                         questionProvider.updateStartDate(
                             addedTimeOfDay.millisecondsSinceEpoch);
                       },
@@ -114,15 +113,14 @@ class EditQuestionScreen extends HookWidget {
                       initialTimeOfDate: TimeOfDay.fromDateTime(
                               questionProvider.question.endDate.toDateTime()) ??
                           TimeOfDay.now(),
-                      onChangedDateTime: (int value) =>
-                          questionProvider.updateEndDate(value),
-                      onChangedTimeOfDay: (TimeOfDay value) {
+                      onChangedDateTime: questionProvider.updateEndDate,
+                      onChangedTimeOfDay: (timeOfDay) {
                         final date =
                             questionProvider.question.endDate.toDateTime();
                         final pureDate =
                             DateTime(date.year, date.month, date.day);
-                        final addedTimeOfDay = pureDate.add(
-                            Duration(minutes: value.minute, hours: value.hour));
+                        final addedTimeOfDay = pureDate.add(Duration(
+                            minutes: timeOfDay.minute, hours: timeOfDay.hour));
                         questionProvider.updateEndDate(
                             addedTimeOfDay.millisecondsSinceEpoch);
                       },
@@ -130,14 +128,14 @@ class EditQuestionScreen extends HookWidget {
                     IsActiveQuestion(
                       initialValue: questionProvider.question.isActive,
                       onChanged: (value) =>
-                          questionProvider.updateActive(value),
+                          questionProvider.updateActive(activate: value),
                     )
                   ],
                 ),
               ],
             ),
             HeaderField(
-              formState: this.headerFormState,
+              formState: headerFormState,
               initialValue: questionProvider.question.header ?? "",
               onChanged: (value) {
                 if (value != null && value.isNotEmpty) {
@@ -146,7 +144,7 @@ class EditQuestionScreen extends HookWidget {
               },
             ),
             ContentField(
-                formState: this.contentFormState,
+                formState: contentFormState,
                 initialValue: questionProvider.question.content ?? "",
                 onChanged: (value) {
                   if (value != null && value.isNotEmpty) {
@@ -154,7 +152,7 @@ class EditQuestionScreen extends HookWidget {
                   }
                 }),
             ImageUrlField(
-              formState: this.imageURLFormState,
+              formState: imageURLFormState,
               initialValue: questionProvider.question.imageUrl ?? "",
               onChanged: (value) {
                 if (value != null && value.isNotEmpty) {

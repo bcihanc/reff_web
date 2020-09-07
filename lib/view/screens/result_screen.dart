@@ -4,40 +4,45 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:reff_shared/core/models/ResultModel.dart';
 import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_shared/core/services/services.dart';
+import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/core/utils/locator.dart';
 
-final questionIDProvider = ScopedProvider<String>((_) => "");
+final resultIDState = StateProvider<String>((_) => "");
 
 class ResultScreen extends HookWidget {
-  final String questionID;
-  ResultScreen({@required this.questionID});
-
   @override
   Widget build(BuildContext context) {
-    return ProviderScope(
-      overrides: [questionIDProvider.overrideWithValue(questionID)],
-      child: Scaffold(
-          body: Column(
-        children: [
-          QuestionInfo(),
-          Divider(height: 40),
-          Expanded(child: ResultWidget())
-        ],
-      )),
-    );
+    final resultID = useProvider(resultIDState);
+    return Scaffold(
+        appBar: AppBar(title: Text('Sonuçlar')),
+        floatingActionButton: FloatingActionButton(
+            child: Icon(Icons.delete),
+            onPressed: () async {
+              // todo : add delete op.
+              if (resultID.state != null && resultID.state != "") {
+                await locator<BaseResultApi>().remove(resultID.state);
+              }
+            }),
+        body: Column(
+          children: [
+            QuestionInfo(),
+            Divider(height: 40),
+            Expanded(child: ResultWidget())
+          ],
+        ));
   }
 }
 
 class QuestionInfo extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final questionID = useProvider(questionIDProvider);
+    final questionState = useProvider(QuestionChangeNotifier.provider);
 
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: FutureBuilder<QuestionModel>(
-            future: locator<BaseQuestionApi>().get(questionID),
+            future: locator<BaseQuestionApi>().get(questionState.question.id),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Text('loading question');
@@ -58,16 +63,16 @@ class ResultWidget extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final questionID = useProvider(questionIDProvider);
+    final questionState = useProvider(QuestionChangeNotifier.provider);
 
     return FutureBuilder<ResultModel>(
-      future: locator<BaseResultApi>().getByQuestion(questionID),
+      future: locator<BaseResultApi>().getByQuestion(questionState.question.id),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting)
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return Text('loading result');
+        }
         if (snapshot.hasData) {
           final result = snapshot.data;
-
           return FutureBuilder<List<AnswerModel>>(
             future: locator<BaseAnswerApi>().gets(result.answers),
             builder: (context, snapshot) {
@@ -146,23 +151,36 @@ class ResultWidget extends HookWidget {
                         ),
                       );
                     });
-              } else
+              } else {
                 return Text('loading answers');
+              }
             },
           );
-        } else
-          return noResult(questionID);
+        } else {
+          return CreateNewResult();
+        }
       },
     );
   }
 }
 
-Widget noResult(String questionID) {
-  return Center(
-    child: RaisedButton(
-        child: Text('no found any result, create new one'),
-        onPressed: () async {
-          await locator<ResultFirestoreApi>().createFromQuestion(questionID);
-        }),
-  );
+class CreateNewResult extends HookWidget {
+  const CreateNewResult({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final questionProvider = useProvider(QuestionChangeNotifier.provider);
+
+    return Center(
+      child: RaisedButton(
+          child: Text('not found result, create new one'),
+          onPressed: () async {
+            await locator<BaseResultApi>()
+                .createFromQuestion(questionProvider.question.id);
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          }),
+    );
+  }
 }

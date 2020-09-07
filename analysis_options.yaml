@@ -1,0 +1,13 @@
+include: package:effective_dart/analysis_options.yaml
+
+analyzer:
+  exclude:
+    - "build/**"
+    - '**/*g.dart'
+    - '**/*freezed.dart'
+
+linter:
+  rules:
+    public_member_api_docs: false
+    prefer_relative_imports: false
+    file_names: false

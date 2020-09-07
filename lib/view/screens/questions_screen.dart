@@ -4,11 +4,13 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_shared/core/services/api.dart';
+import 'package:reff_shared/core/services/services.dart';
 import 'package:reff_web/core/utils/locator.dart';
 import 'package:reff_web/core/providers/providers.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
 import 'package:reff_web/view/screens/edit_question_screen.dart';
+import 'package:reff_web/view/screens/result_screen.dart';
 import 'package:reff_web/view/widgets/custom_card.dart';
 import 'package:reff_web/view/widgets/edit_question_widgets.dart';
 
@@ -20,12 +22,11 @@ class QuestionsScreen extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final busyState = useProvider(BusyState.busyStateProvider);
-    final questionState = useProvider(questionChangeNotifierProvider);
-
+    final questionState = useProvider(QuestionChangeNotifier.provider);
     final questionsStream = useProvider(questionsFromApi);
+
     return Scaffold(
-      appBar: _appBar(busyState.isBusy),
+      appBar: AppBarWithBusyState(),
       floatingActionButton: QuestionsScreenFloatingActionButton(),
       body: Column(
         children: [
@@ -62,13 +63,49 @@ class QuestionsScreen extends HookWidget {
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
                                       IconButton(
+                                        icon: Icon(Icons.sort),
+                                        onPressed: () async {
+                                          context
+                                              .read(BusyState.provider)
+                                              .busy();
+
+                                          final answerApi =
+                                              locator<BaseAnswerApi>();
+                                          final answers = await answerApi
+                                              .gets(question.answers);
+                                          context
+                                              .read(BusyState.provider)
+                                              .notBusy();
+
+                                          questionState.initialize(
+                                              answers: answers,
+                                              question: question);
+
+                                          await Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ResultScreen()),
+                                          );
+                                          context
+                                              .read(BusyState.provider)
+                                              .notBusy();
+                                        },
+                                      ),
+                                      IconButton(
                                         icon: Icon(Icons.edit),
                                         onPressed: () async {
-                                          busyState.busy();
-                                          final api = locator<BaseApi>();
-                                          final answers = await api.answer
+                                          context
+                                              .read(BusyState.provider)
+                                              .busy();
+
+                                          final answerApi =
+                                              locator<BaseAnswerApi>();
+                                          final answers = await answerApi
                                               .gets(question.answers);
-                                          busyState.notBusy();
+                                          context
+                                              .read(BusyState.provider)
+                                              .notBusy();
 
                                           questionState.initialize(
                                               answers: answers,
@@ -84,12 +121,16 @@ class QuestionsScreen extends HookWidget {
                                       ),
                                       IconButton(
                                         onPressed: () async {
-                                          busyState.busy();
+                                          context
+                                              .read(BusyState.provider)
+                                              .busy();
 
                                           await locator<BaseApi>()
                                               .question
                                               .remove(question.id);
-                                          busyState.notBusy();
+                                          context
+                                              .read(BusyState.provider)
+                                              .notBusy();
                                         },
                                         icon: Icon(Icons.delete),
                                       ),
@@ -108,23 +149,35 @@ class QuestionsScreen extends HookWidget {
   }
 }
 
-AppBar _appBar(bool busyState) => AppBar(
-    flexibleSpace: Align(
-        alignment: Alignment.centerRight,
-        child: busyState
-            ? Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: CircularProgressIndicator(),
-              )
-            : null),
-    title: Text('Reff Panel'));
+// ignore: prefer_mixin
+class AppBarWithBusyState extends HookWidget with PreferredSizeWidget {
+  const AppBarWithBusyState({Key key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final busyState = useProvider(BusyState.provider.state);
+    return AppBar(
+        flexibleSpace: Align(
+            alignment: Alignment.centerRight,
+            child: busyState
+                ? Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(),
+                  )
+                : null),
+        title: Text('Reff Panel'));
+  }
+
+  @override
+  Size get preferredSize => Size.fromHeight(50);
+}
 
 class QuestionsScreenFloatingActionButton extends HookWidget {
   const QuestionsScreenFloatingActionButton({Key key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    final questionState = useProvider(questionChangeNotifierProvider);
+    final questionState = useProvider(QuestionChangeNotifier.provider);
 
     return Column(
       mainAxisSize: MainAxisSize.min,

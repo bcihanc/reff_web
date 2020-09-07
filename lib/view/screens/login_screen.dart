@@ -24,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (result.user != null) {
         Navigator.pushReplacementNamed(context, QuestionsScreen.route);
       }
-    } catch (e) {
+    } on Exception catch (e) {
       Scaffold.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       setState(() => _isBusy = false);

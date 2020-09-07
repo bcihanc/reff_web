@@ -4,7 +4,7 @@ import 'package:reff_web/core/services/firestore_api.dart';
 
 final locator = GetIt.instance;
 
-setupLocator() async {
+Future<void> setupLocator() async {
   locator.registerLazySingleton<BaseQuestionApi>(() => QuestionFirestoreApi());
   locator.registerLazySingleton<BaseAnswerApi>(() => AnswerFirestoreApi());
   locator.registerLazySingleton<BaseUserApi>(() => UserFirebaseApi());

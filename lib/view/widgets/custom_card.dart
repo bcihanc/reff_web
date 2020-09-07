@@ -10,8 +10,8 @@ class CustomCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       elevation: 4,
-      child: this.child,
-      color: this.color,
+      child: child,
+      color: color,
     );
   }
 }
