@@ -14,7 +14,7 @@ dependencies:
     path: ../reff_shared
   state_notifier: ^0.6.0
   hooks_riverpod: ^0.9.1
-  flutter_hooks: ^0.13.2
+  flutter_hooks: ^0.14.0
   firebase_core: ^0.5.0
   firebase_auth: ^0.18.0+1
   cloud_firestore: ^0.14.0+2
@@ -23,7 +23,8 @@ dependencies:
   intl: ^0.16.1
   freezed_annotation: ^0.11.0+1
   searchable_dropdown: ^1.1.3
-  sortedmap: ^0.4.2+1
+  material_design_icons_flutter: ^4.0.5555
+  flutter_spinkit: ^4.1.2+1
 
 dev_dependencies:
   flutter_test:
@@ -36,3 +37,5 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/logo.png

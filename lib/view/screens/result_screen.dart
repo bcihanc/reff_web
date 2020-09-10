@@ -21,6 +21,8 @@ class ResultScreen extends HookWidget {
               // todo : add delete op.
               if (resultID.state != null && resultID.state != "") {
                 await locator<BaseResultApi>().remove(resultID.state);
+              } else {
+                debugPrint('resultID is null');
               }
             }),
         body: Column(

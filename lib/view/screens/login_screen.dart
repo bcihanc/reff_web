@@ -1,85 +1,96 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:reff_web/core/providers/providers.dart';
+import 'package:reff_web/main.dart';
 import 'package:reff_web/view/screens/questions_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  @override
-  _LoginScreenState createState() => _LoginScreenState();
-}
+class LoginScreen extends HookWidget {
+  final _emailState = useState("");
+  final _passwordState = useState("");
 
-class _LoginScreenState extends State<LoginScreen> {
-  String _email;
-  String _password;
-
-  String _result;
-
-  bool _isBusy = false;
-
-  Future<void> _hangleLogin() async {
-    setState(() => _isBusy = true);
+  Future<void> _hangleLogin(BuildContext context) async {
+    context.read(BusyState.provider).busy();
     try {
-      final result = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: _email, password: _password);
-
-      if (result.user != null) {
-        Navigator.pushReplacementNamed(context, QuestionsScreen.route);
-      }
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: _emailState.value, password: _passwordState.value);
     } on Exception catch (e) {
       Scaffold.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
-      setState(() => _isBusy = false);
+      context.read(BusyState.provider).notBusy();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isBusy = useProvider(BusyState.provider.state);
+
     final style = TextStyle(fontWeight: FontWeight.bold);
     final perfectWidth = MediaQuery.of(context).size.width;
-    return Container(
-      width: perfectWidth,
-      padding: const EdgeInsets.all(24),
-      child: SingleChildScrollView(
-        child: Card(
-          color: Colors.grey.shade700,
+
+    final isDarkMode =
+        (MediaQuery.of(context).platformBrightness == Brightness.dark);
+
+    return Scaffold(
+      body: Container(
+        width: perfectWidth,
+        padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
           child: Column(
             children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 32),
+                child: Image.asset(
+                  "images/logo.png",
+                  color: isDarkMode ? Colors.grey : Colors.white,
+                  width: 300,
+                  fit: BoxFit.fitWidth,
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Text("", style: style),
               ),
               Card(
-                margin: const EdgeInsets.all(8),
                 child: TextField(
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
-                      hintText: "email",
+                      hintText: "Email",
                       prefixIcon: Icon(Icons.alternate_email),
                       border: InputBorder.none,
                     ),
-                    onChanged: (value) => setState(() => _email = value)),
+                    onChanged: (value) => _emailState.value = value,
+                    onSubmitted: (value) => _hangleLogin(context)),
               ),
+              Divider(color: Colors.transparent),
               Card(
-                margin: const EdgeInsets.all(8),
                 child: TextField(
                     obscureText: true,
                     decoration: InputDecoration(
-                      hintText: "password",
+                      hintText: "Password",
                       prefixIcon: Icon(Icons.lock),
                       border: InputBorder.none,
                     ),
-                    onChanged: (value) => setState(() => _password = value),
-                    onSubmitted: (value) => setState(() => _password = value)),
+                    onChanged: (value) => _passwordState.value = value,
+                    onSubmitted: (value) => _hangleLogin(context)),
               ),
-              _isBusy
-                  ? CircularProgressIndicator()
-                  : RaisedButton(
-                      child: Text("sign in"),
-                      onPressed: _hangleLogin,
+              Divider(color: Colors.transparent),
+              isBusy
+                  ? SpinKitWave(color: Colors.grey)
+                  : RaisedButton.icon(
+                      color: Colors.grey,
+                      icon: Icon(MdiIcons.login,
+                          color: isDarkMode ? Colors.black : Colors.white),
+                      label: Text(
+                        "Sign In",
+                        style: TextStyle(
+                            color: isDarkMode ? Colors.black : Colors.white),
+                      ),
+                      onPressed: () => _hangleLogin(context),
                     ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(_result ?? ""),
-              )
             ],
           ),
         ),

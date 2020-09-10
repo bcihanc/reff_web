@@ -18,15 +18,36 @@ final questionsFromApi =
     StreamProvider((_) => locator<BaseApi>().question.gets());
 
 class QuestionsScreen extends HookWidget {
-  static const route = "/questions";
-
   @override
   Widget build(BuildContext context) {
     final questionState = useProvider(QuestionChangeNotifier.provider);
     final questionsStream = useProvider(questionsFromApi);
 
+    final busyState = useProvider(BusyState.provider.state);
+    final isDarkMode =
+        (MediaQuery.of(context).platformBrightness == Brightness.dark);
+
     return Scaffold(
-      appBar: AppBarWithBusyState(),
+      appBar: AppBar(
+          flexibleSpace: Stack(
+        children: [
+          Center(
+            child: Image.asset(
+              "images/logo.png",
+              color: isDarkMode ? Colors.grey : Colors.white,
+              height: 30,
+            ),
+          ),
+          Align(
+              alignment: Alignment.centerRight,
+              child: busyState
+                  ? Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: CircularProgressIndicator(),
+                    )
+                  : null),
+        ],
+      )),
       floatingActionButton: QuestionsScreenFloatingActionButton(),
       body: Column(
         children: [
@@ -147,29 +168,6 @@ class QuestionsScreen extends HookWidget {
       ),
     );
   }
-}
-
-// ignore: prefer_mixin
-class AppBarWithBusyState extends HookWidget with PreferredSizeWidget {
-  const AppBarWithBusyState({Key key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    final busyState = useProvider(BusyState.provider.state);
-    return AppBar(
-        flexibleSpace: Align(
-            alignment: Alignment.centerRight,
-            child: busyState
-                ? Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: CircularProgressIndicator(),
-                  )
-                : null),
-        title: Text('Reff Panel'));
-  }
-
-  @override
-  Size get preferredSize => Size.fromHeight(50);
 }
 
 class QuestionsScreenFloatingActionButton extends HookWidget {
