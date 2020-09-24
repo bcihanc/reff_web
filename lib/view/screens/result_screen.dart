@@ -1,11 +1,15 @@
+import 'dart:core';
+
+import 'package:charts_flutter/flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:reff_shared/core/models/ResultModel.dart';
 import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_shared/core/services/services.dart';
+import 'package:reff_web/core/providers/providers.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/core/utils/locator.dart';
+import 'package:flutter/material.dart' as material;
 
 final resultIDState = StateProvider<String>((_) => "");
 
@@ -38,7 +42,8 @@ class ResultScreen extends HookWidget {
 class QuestionInfo extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final questionState = useProvider(QuestionChangeNotifier.provider);
+    final questionState =
+        useProvider(QuestionWithAnswersChangeNotifier.provider);
 
     return Card(
       child: Padding(
@@ -61,128 +66,159 @@ class QuestionInfo extends HookWidget {
 }
 
 class ResultWidget extends HookWidget {
-  const ResultWidget({Key key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
-    final questionState = useProvider(QuestionChangeNotifier.provider);
+    final questionState =
+        useProvider(QuestionWithAnswersChangeNotifier.provider);
 
-    return FutureBuilder<ResultModel>(
-      future: locator<BaseResultApi>().getByQuestion(questionState.question.id),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Text('loading result');
-        }
-        if (snapshot.hasData) {
-          final result = snapshot.data;
-          return FutureBuilder<List<AnswerModel>>(
-            future: locator<BaseAnswerApi>().gets(result.answers),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                final answers = snapshot.data;
-                return ListView.builder(
-                    itemCount: answers.length,
-                    itemBuilder: (context, index) {
-                      final answer = answers[index];
-                      final resultAgeMapForThisAnswer = result.agesMap.entries
-                          .where((element) => element.key == answer.id)
-                          .map((e) => e.value)
-                          .first;
+    final resultFuture = useProvider(
+        Providers.resultByQuestionIDFutureProvider(questionState.question.id));
 
-                      final resultGenderMapForThisAnswer = result
-                          .gendersMap.entries
-                          .where((element) => element.key == answer.id)
-                          .map((e) => e.value)
-                          .first;
+    final answersFuture = useProvider(
+        Providers.answersFutureProvider(questionState.question.answers));
 
-                      final resultCityNameMapForThisAnswer = result
-                          .cityNameMap.entries
-                          .where((element) => element.key == answer.id)
-                          .map((e) => e.value)
-                          .first;
+    return resultFuture.maybeWhen(
+        data: (result) => answersFuture.maybeWhen(
+            data: (answers) => ListView.builder(
+                itemCount: answers.length,
+                itemBuilder: (context, index) {
+                  final answer = answers[index];
 
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Card(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(answer.content),
-                              ),
-                              DataTable(
-                                columns: [
-                                  DataColumn(label: Text('Yaş')),
-                                  DataColumn(label: Text('Sayı'))
-                                ],
-                                rows: resultAgeMapForThisAnswer.entries
-                                    .map((e) => DataRow(cells: [
-                                          DataCell(Text(e.key.toString())),
-                                          DataCell(Text(e.value.toString())),
-                                        ]))
-                                    .toList(),
-                              ),
-                              DataTable(
-                                columns: [
-                                  DataColumn(label: Text('Cinsiyet')),
-                                  DataColumn(label: Text('Sayı'))
-                                ],
-                                rows: resultGenderMapForThisAnswer.entries
-                                    .map((e) => DataRow(cells: [
-                                          DataCell(Text(
-                                              e.key.toString().substring(7))),
-                                          DataCell(Text(e.value.toString())),
-                                        ]))
-                                    .toList(),
-                              ),
-                              DataTable(
-                                columns: [
-                                  DataColumn(label: Text('Şehir')),
-                                  DataColumn(label: Text('Sayı'))
-                                ],
-                                rows: resultCityNameMapForThisAnswer.entries
-                                    .map((e) => DataRow(cells: [
-                                          DataCell(Text(e.key.toString())),
-                                          DataCell(Text(e.value.toString())),
-                                        ]))
-                                    .toList(),
-                              ),
-                            ],
-                          ),
+                  final resultAgeMapForThisAnswer = result.agesMap.entries
+                      .where((element) => element.key == answer.id)
+                      .map((e) => e.value)
+                      .first;
+
+                  final resultGenderMapForThisAnswer = result.gendersMap.entries
+                      .where((element) => element.key == answer.id)
+                      .map((e) => e.value)
+                      .first;
+
+                  final resultCityNameMapForThisAnswer = result
+                      .cityNameMap.entries
+                      .where((element) => element.key == answer.id)
+                      .map((e) => e.value)
+                      .first;
+
+                  final mockAgeMap = {
+                    19: 200,
+                    32: 418,
+                    41: 94,
+                    58: 148,
+                    67: 42,
+                  };
+                  final mockGenderMap = {
+                    Gender.FEMALE: 251,
+                    Gender.MALE: 418,
+                    Gender.OTHERS: 13,
+                  };
+                  final mockCityMap = {
+                    "İstanbul": 200,
+                    "Ankara": 418,
+                    "İzmir": 94,
+                    "Antalya": 148,
+                    "Muğla": 42,
+                  };
+
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Card(
+                      child: ExpansionTile(
+                        backgroundColor:
+                            answer.color.toColor().withOpacity(0.3),
+                        title: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(answer.content),
                         ),
-                      );
-                    });
-              } else {
-                return Text('loading answers');
-              }
-            },
-          );
-        } else {
-          return CreateNewResult();
-        }
-      },
-    );
+                        children: [
+                          Container(
+                              height: 200,
+                              child: MyChart(
+                                  fromMapToChartModel<Gender>(mockGenderMap))),
+                          Container(
+                              height: 200,
+                              child: MyChart(
+                                  fromMapToChartModel<int>(mockAgeMap))),
+                          Container(
+                              height: 200,
+                              child: MyChart(
+                                  fromMapToChartModel<String>(mockCityMap))),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+            orElse: () => Text('loading answers')),
+        orElse: () => Center(child: Text('loading result')));
   }
 }
 
 class CreateNewResult extends HookWidget {
-  const CreateNewResult({Key key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
-    final questionProvider = useProvider(QuestionChangeNotifier.provider);
+    final questionProvider =
+        useProvider(QuestionWithAnswersChangeNotifier.provider);
 
     return Center(
       child: RaisedButton(
           child: Text('not found result, create new one'),
           onPressed: () async {
             await locator<BaseResultApi>()
-                .createFromQuestion(questionProvider.question.id);
+                .addFromQuestion(questionProvider.question.id);
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
             }
           }),
     );
   }
+}
+
+class MyChart extends HookWidget {
+  final List<Series> seriesList;
+
+  MyChart(this.seriesList);
+
+  @override
+  Widget build(BuildContext context) {
+    return seriesList == null
+        ? Center(child: Text('no data'))
+        : BarChart(
+            seriesList,
+            animate: false,
+            vertical: false,
+          );
+  }
+}
+
+List<Series<SeriesModel<T>, String>> fromMapToChartModel<T>(Map<T, int> map) {
+  if (map == null && map.isEmpty) return null;
+
+  final data = <SeriesModel<T>>[];
+  map.forEach((key, value) {
+    if (value > 0) {
+      final entry = SeriesModel<T>(label: key, amount: value);
+      data.add(entry);
+    }
+  });
+
+  if (data.isEmpty) return null;
+
+  return [
+    Series<SeriesModel<T>, String>(
+      id: 'LABEL',
+      domainFn: (model, _) => model.label.toString(),
+      measureFn: (model, _) => model.amount,
+      data: data,
+      labelAccessorFn: (row, _) => '${row.label}: ${row.amount}',
+    )
+  ];
+}
+
+class SeriesModel<T> {
+  SeriesModel({@required this.label, @required this.amount})
+      : assert(label != null),
+        assert(amount != null);
+
+  final T label;
+  final int amount;
 }

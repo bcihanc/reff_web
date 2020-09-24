@@ -21,10 +21,7 @@ class AddAnswerButton extends HookWidget {
       alignment: Alignment.centerRight,
       padding: xsmallPadding,
       child: RaisedButton.icon(
-          color: Colors.blueGrey,
-          onPressed: onPressed,
-          icon: Icon(Icons.add),
-          label: Text('Ekle')),
+          onPressed: onPressed, icon: Icon(Icons.add), label: Text('Ekle')),
     );
   }
 }
@@ -32,7 +29,8 @@ class AddAnswerButton extends HookWidget {
 class AnswerList extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final questionProvider = useProvider(QuestionChangeNotifier.provider);
+    final questionProvider =
+        useProvider(QuestionWithAnswersChangeNotifier.provider);
 
     return CustomCard(
       child: Padding(
@@ -207,7 +205,6 @@ class _SomeWidgetState extends State<EditAnswerDialog> {
               Align(
                 alignment: Alignment.centerRight,
                 child: RaisedButton.icon(
-                    color: Colors.blueGrey,
                     onPressed: () {
                       Navigator.pop(context, answerState.value);
                     },
@@ -304,12 +301,13 @@ class DateTimePicker extends HookWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
         child: RaisedButton.icon(
-            color: Colors.blueGrey,
             onPressed: () async {
               final dateTime = await showDatePicker(
                       context: context,
                       initialDate: initialDateTime.toDateTime(),
-                      firstDate: DateTime.now(),
+                      firstDate: initialDateTime
+                          .toDateTime()
+                          .subtract(Duration(days: 365)),
                       lastDate: DateTime.now().add(Duration(days: 365))) ??
                   DateTime.now();
 
@@ -383,7 +381,8 @@ class ImageUrlField extends HookWidget {
   @override
   Widget build(BuildContext context) {
     final _controller = useTextEditingController(text: initialValue);
-    final questionProvider = useProvider(QuestionChangeNotifier.provider);
+    final questionProvider =
+        useProvider(QuestionWithAnswersChangeNotifier.provider);
 
     return CustomCard(
       child: Padding(
@@ -417,7 +416,6 @@ class ImageUrlField extends HookWidget {
                     child: Container(
                       height: 100,
                       width: 100,
-                      color: Colors.blueGrey,
                       child: Icon(Icons.image),
                     ),
                   )
@@ -439,7 +437,8 @@ class ImageUrlField extends HookWidget {
 class IdShower extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final questionProvider = useProvider(QuestionChangeNotifier.provider);
+    final questionProvider =
+        useProvider(QuestionWithAnswersChangeNotifier.provider);
 
     var idTextWidget = (questionProvider.question.id != null)
         ? QuestionExistsState.exsist()
@@ -477,6 +476,7 @@ class IsActiveQuestion extends HookWidget {
             Text('Yayın'),
             Switch(
                 value: valueState.value,
+                activeColor: Theme.of(context).accentColor,
                 onChanged: (active) {
                   valueState.value = active;
                   onChanged(active);

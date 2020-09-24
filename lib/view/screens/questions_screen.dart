@@ -3,27 +3,24 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:reff_shared/core/models/models.dart';
-import 'package:reff_shared/core/services/api.dart';
-import 'package:reff_shared/core/services/services.dart';
-import 'package:reff_web/core/utils/locator.dart';
+import 'package:reff_web/core/providers/busy_state_notifier.dart';
 import 'package:reff_web/core/providers/providers.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
 import 'package:reff_web/view/screens/edit_question_screen.dart';
 import 'package:reff_web/view/screens/result_screen.dart';
 import 'package:reff_web/view/widgets/custom_card.dart';
-import 'package:reff_web/view/widgets/edit_question_widgets.dart';
 
-final questionsFromApi =
-    StreamProvider((_) => locator<BaseApi>().question.gets());
+class QuestionsList extends HookWidget {
+  QuestionsList(this.questions);
+  final List<QuestionModel> questions;
 
-class QuestionsScreen extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final questionState = useProvider(QuestionChangeNotifier.provider);
-    final questionsStream = useProvider(questionsFromApi);
+    final questionState =
+        useProvider(QuestionWithAnswersChangeNotifier.provider);
 
-    final busyState = useProvider(BusyState.provider.state);
+    final isBusy = useProvider(BusyState.provider.state);
     final isDarkMode =
         (MediaQuery.of(context).platformBrightness == Brightness.dark);
 
@@ -32,138 +29,88 @@ class QuestionsScreen extends HookWidget {
           flexibleSpace: Stack(
         children: [
           Center(
-            child: Image.asset(
+            child: Image.network(
               "images/logo.png",
               color: isDarkMode ? Colors.grey : Colors.white,
               height: 30,
             ),
           ),
           Align(
-              alignment: Alignment.centerRight,
-              child: busyState
-                  ? Padding(
-                      padding: const EdgeInsets.only(right: 8.0),
-                      child: CircularProgressIndicator(),
-                    )
-                  : null),
+              alignment: Alignment.bottomCenter,
+              child: isBusy
+                  ? LinearProgressIndicator(backgroundColor: Colors.grey)
+                  : SizedBox.shrink()),
         ],
       )),
       floatingActionButton: QuestionsScreenFloatingActionButton(),
       body: Column(
         children: [
-          FilterBar(),
+          // FilterBar(),
           Container(
-            padding: mediumPadding,
-            width: double.maxFinite,
-            child: questionsStream.when(
-                data: (questions) => CustomCard(
-                      child: DataTable(
-                          columns: ["Question", "Start Date", "End Date", ""]
-                              .map((e) => DataColumn(
-                                    label: Text(e,
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                  ))
-                              .toList(),
-                          rows: questions
-                              .map(
-                                (question) => DataRow(cells: [
-                                  DataCell(Text(
-                                    question.header,
-                                    style: TextStyle(
-                                        fontWeight: question.isActive
-                                            ? FontWeight.bold
-                                            : FontWeight.w100),
-                                  )),
-                                  DataCell(Text(DateFormat("HH:mm - dd.MM.yyyy")
-                                      .format(
-                                          question.startDate.toDateTime()))),
-                                  DataCell(Text(DateFormat("HH:mm - dd.MM.yyyy")
-                                      .format(question.endDate.toDateTime()))),
-                                  DataCell(Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(Icons.sort),
-                                        onPressed: () async {
-                                          context
-                                              .read(BusyState.provider)
-                                              .busy();
-
-                                          final answerApi =
-                                              locator<BaseAnswerApi>();
-                                          final answers = await answerApi
-                                              .gets(question.answers);
-                                          context
-                                              .read(BusyState.provider)
-                                              .notBusy();
-
-                                          questionState.initialize(
-                                              answers: answers,
-                                              question: question);
-
-                                          await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    ResultScreen()),
-                                          );
-                                          context
-                                              .read(BusyState.provider)
-                                              .notBusy();
-                                        },
-                                      ),
-                                      IconButton(
-                                        icon: Icon(Icons.edit),
-                                        onPressed: () async {
-                                          context
-                                              .read(BusyState.provider)
-                                              .busy();
-
-                                          final answerApi =
-                                              locator<BaseAnswerApi>();
-                                          final answers = await answerApi
-                                              .gets(question.answers);
-                                          context
-                                              .read(BusyState.provider)
-                                              .notBusy();
-
-                                          questionState.initialize(
-                                              answers: answers,
-                                              question: question);
-
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    EditQuestionScreen()),
-                                          );
-                                        },
-                                      ),
-                                      IconButton(
-                                        onPressed: () async {
-                                          context
-                                              .read(BusyState.provider)
-                                              .busy();
-
-                                          await locator<BaseApi>()
-                                              .question
-                                              .remove(question.id);
-                                          context
-                                              .read(BusyState.provider)
-                                              .notBusy();
-                                        },
-                                        icon: Icon(Icons.delete),
-                                      ),
-                                    ],
-                                  )),
-                                ]),
-                              )
-                              .toList()),
-                    ),
-                loading: () => Center(child: LinearProgressIndicator()),
-                error: (err, stack) => Text("$err")),
-          ),
+              padding: mediumPadding,
+              width: double.maxFinite,
+              child: CustomCard(
+                child: DataTable(
+                    columns: ["Question", "Start Date", "End Date", ""]
+                        .map((e) => DataColumn(
+                              label: Text(e,
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
+                            ))
+                        .toList(),
+                    rows: questions
+                        .map(
+                          (question) => DataRow(cells: [
+                            DataCell(Text(
+                              question.header,
+                              style: TextStyle(
+                                  fontWeight: question.isActive
+                                      ? FontWeight.bold
+                                      : FontWeight.w100),
+                            )),
+                            DataCell(Text(DateFormat("HH:mm - dd.MM.yyyy")
+                                .format(question.startDate.toDateTime()))),
+                            DataCell(Text(DateFormat("HH:mm - dd.MM.yyyy")
+                                .format(question.endDate.toDateTime()))),
+                            DataCell(Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                IconButton(
+                                  icon: Icon(Icons.sort),
+                                  onPressed: () async {
+                                    await questionState
+                                        .initializeWithAnswers(question);
+                                    await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => ResultScreen()),
+                                    );
+                                  },
+                                ),
+                                IconButton(
+                                  icon: Icon(Icons.edit),
+                                  onPressed: () async {
+                                    await questionState
+                                        .initializeWithAnswers(question);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              EditQuestionScreen()),
+                                    );
+                                  },
+                                ),
+                                IconButton(
+                                  onPressed: () async => await questionState
+                                      .removeQuestionWithAnswers(question.id),
+                                  icon: Icon(Icons.delete),
+                                ),
+                              ],
+                            )),
+                          ]),
+                        )
+                        .toList()),
+              )),
         ],
       ),
     );
@@ -175,7 +122,8 @@ class QuestionsScreenFloatingActionButton extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
-    final questionState = useProvider(QuestionChangeNotifier.provider);
+    final questionState =
+        useProvider(QuestionWithAnswersChangeNotifier.provider);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -184,7 +132,6 @@ class QuestionsScreenFloatingActionButton extends HookWidget {
         FloatingActionButton(
             heroTag: "add",
             child: Icon(Icons.add),
-            backgroundColor: Colors.blueGrey,
             onPressed: () {
               questionState.initialize(
                   answers: <AnswerModel>[],

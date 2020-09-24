@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:reff_shared/core/models/models.dart';
-import 'package:reff_shared/core/services/api.dart';
+import 'package:reff_shared/core/services/services.dart';
+import 'package:reff_web/core/providers/busy_state_notifier.dart';
+import 'package:reff_web/core/providers/providers.dart';
 import 'package:reff_web/core/utils/locator.dart';
 import 'package:reff_web/core/models/Unions.dart';
 
@@ -17,14 +19,13 @@ class FilterChangeNotifier extends ChangeNotifier {
   }
 }
 
-class QuestionChangeNotifier extends ChangeNotifier {
-  QuestionChangeNotifier(this.ref);
+class QuestionWithAnswersChangeNotifier extends ChangeNotifier {
+  QuestionWithAnswersChangeNotifier(this.ref);
 
   static final provider =
-      ChangeNotifierProvider((ref) => QuestionChangeNotifier(ref));
+      ChangeNotifierProvider((ref) => QuestionWithAnswersChangeNotifier(ref));
 
   final _logger = Logger("QuestionProvider");
-  final api = locator<BaseApi>();
 
   QuestionModel question;
   List<AnswerModel> answers;
@@ -130,16 +131,35 @@ class QuestionChangeNotifier extends ChangeNotifier {
     }
   }
 
+  Future<void> initializeWithAnswers(QuestionModel question) async {
+    ref.read(BusyState.provider).busy();
+    final answerApi = locator<BaseAnswerApi>();
+    final answers = await answerApi.gets(question.answers);
+    initialize(answers: answers, question: question);
+    ref.read(BusyState.provider).notBusy();
+  }
+
+  Future<void> removeQuestionWithAnswers(String questionID) async {
+    ref.read(BusyState.provider).busy();
+    await locator<BaseQuestionApi>().remove(questionID);
+    ref.read(BusyState.provider).notBusy();
+  }
+
   Future<bool> saveToFirebase({@required bool validation}) async {
+    final answerApi = locator<BaseAnswerApi>();
+    final questionApi = locator<BaseQuestionApi>();
+
     if (answers.isNotEmpty && validation) {
+      ref.read(BusyState.provider).busy();
+
       await questionExistsState.when(
         // yeni bir question kaydedilirken
         notExsist: () async {
-          final ids = await api.answer.adds(answers);
+          final ids = await answerApi.adds(answers);
           _logger.info('saveAll : ${ids.length} adet tercih kaydedildi');
 
           final newQuestion = question.copyWith.call(answers: ids);
-          final questionID = await api.question.add(newQuestion);
+          final questionID = await questionApi.add(newQuestion);
           _logger.info('saveAll : yeni bir soru yaratıldı $questionID');
         },
 
@@ -149,26 +169,29 @@ class QuestionChangeNotifier extends ChangeNotifier {
 
           for (final answer in answers) {
             if (answer.id != null) {
-              await api.answer.update(answer.id, answer);
-              await api.question.update(question.id, question);
+              await answerApi.update(answer.id, answer);
+              await questionApi.update(question.id, question);
             } else {
               newAnswers.add(answer);
               answers.remove(answer);
             }
             if (newAnswers.isNotEmpty) {
-              final ids = await api.answer.adds(newAnswers);
+              final ids = await answerApi.adds(newAnswers);
               question.answers.addAll(ids);
             }
 
-            await api.question.update(question.id, question);
+            await questionApi.update(question.id, question);
           }
           _logger.info('updateAnswerToFirebase tercihler güncellendi');
         },
       );
+
+      ref.read(BusyState.provider).notBusy();
       return true;
     } else {
       _logger.warning("saveToFirebase validaston hatası");
+      ref.read(BusyState.provider).notBusy();
+      return false;
     }
-    return false;
   }
 }

@@ -4,9 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
-import 'package:reff_web/core/providers/providers.dart';
-import 'package:reff_web/main.dart';
-import 'package:reff_web/view/screens/questions_screen.dart';
+import 'package:reff_web/core/providers/busy_state_notifier.dart';
 
 class LoginScreen extends HookWidget {
   final _emailState = useState("");
@@ -43,7 +41,7 @@ class LoginScreen extends HookWidget {
             children: [
               Padding(
                 padding: const EdgeInsets.only(top: 32),
-                child: Image.asset(
+                child: Image.network(
                   "images/logo.png",
                   color: isDarkMode ? Colors.grey : Colors.white,
                   width: 300,

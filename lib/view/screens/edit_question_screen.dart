@@ -3,6 +3,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:reff_shared/core/models/models.dart';
+import 'package:reff_web/core/models/Unions.dart';
+import 'package:reff_web/core/providers/busy_state_notifier.dart';
 import 'package:reff_web/core/providers/providers.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
 import 'package:reff_web/styles.dart';
@@ -23,20 +25,21 @@ class EditQuestionScreen extends HookWidget {
         imageURLFormState.currentState.validate();
 
     _logger.info("build");
-    final questionProvider = useProvider(QuestionChangeNotifier.provider);
+    final questionProvider =
+        useProvider(QuestionWithAnswersChangeNotifier.provider);
     final busyState = useProvider(BusyState.provider.state);
 
     return Scaffold(
       appBar: AppBar(
           flexibleSpace: Align(
-              alignment: Alignment.centerRight,
+              alignment: Alignment.bottomCenter,
               child: busyState
-                  ? Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: CircularProgressIndicator(),
-                    )
-                  : null),
-          title: Text("edit")),
+                  ? LinearProgressIndicator(backgroundColor: Colors.grey)
+                  : SizedBox.shrink()),
+          title: (questionProvider.questionExistsState ==
+                  QuestionExistsState.exsist())
+              ? Text("Edit")
+              : Text("Create")),
       floatingActionButton: Builder(
           builder: (context) => Column(
                 mainAxisSize: MainAxisSize.min,
@@ -44,28 +47,22 @@ class EditQuestionScreen extends HookWidget {
                 children: [
                   FloatingActionButton(
                       heroTag: "delete",
-                      backgroundColor: Colors.blueGrey,
                       child: Icon(Icons.delete),
                       onPressed: () {}),
                   Divider(color: Colors.transparent),
                   FloatingActionButton(
                       heroTag: "save",
                       child: Icon(Icons.save),
-                      backgroundColor: Colors.blueGrey,
                       onPressed: () async {
                         if (questionProvider.answers.length < 2) {
                           Scaffold.of(context).showSnackBar(SnackBar(
                               content: Text('En az 2 tercih eklemelisin')));
                         } else {
-                          context.read(BusyState.provider).busy();
-
                           final result = await questionProvider.saveToFirebase(
                               validation: _validation());
-                          if (result) {
+                          if (result && Navigator.canPop(context)) {
                             Navigator.pop(context);
                           }
-
-                          context.read(BusyState.provider).notBusy();
                         }
                       }),
                 ],
