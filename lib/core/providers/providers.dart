@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -13,14 +14,18 @@ mixin Providers {
     return auth.authStateChanges();
   });
 
-  static final resultByQuestionIDFutureProvider =
-      FutureProvider.family<ResultModel, String>((ref, questionID) =>
+  static final resultByQuestionIDFutureProvider = FutureProvider.family
+      .autoDispose<ResultModel, String>((ref, questionID) =>
           locator<BaseResultApi>().getByQuestion(questionID));
 
   static final answersFutureProvider =
       FutureProvider.family<List<AnswerModel>, List<String>>(
           (ref, answersIDs) => locator<BaseAnswerApi>().gets(answersIDs));
 
-  static final questionsStreamProvider =
-      FutureProvider.autoDispose((_) => locator<BaseQuestionApi>().gets());
+  static final questionsFutureProvider = FutureProvider.autoDispose((ref) =>
+      locator<BaseQuestionApi>().gets(limit: 50, orderByFirstNew: true));
+
+  static final questionFutureProvider =
+      FutureProvider.family<QuestionModel, String>(
+          (ref, questionID) => locator<BaseQuestionApi>().get(questionID));
 }

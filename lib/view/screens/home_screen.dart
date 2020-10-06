@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -8,10 +9,17 @@ import 'package:reff_web/view/screens/questions_screen.dart';
 class HomeScreen extends HookWidget {
   @override
   Widget build(BuildContext context) {
-    final questionsFuture = useProvider(Providers.questionsStreamProvider);
+    // todo : eski haline çevir
+    final questionsFuture = useProvider(Providers.questionsFutureProvider);
 
     return questionsFuture.when(
-        data: (questions) => QuestionsList(questions),
+        data: (questions) {
+          return Column(
+            children: [
+              Expanded(child: QuestionsList(questions)),
+            ],
+          );
+        },
         loading: () => Scaffold(
               body: Center(
                 child: SpinKitWave(color: Colors.grey),

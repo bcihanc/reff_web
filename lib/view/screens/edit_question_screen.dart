@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:future_button/future_button.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:reff_shared/core/models/models.dart';
@@ -53,18 +54,34 @@ class EditQuestionScreen extends HookWidget {
                   FloatingActionButton(
                       heroTag: "save",
                       child: Icon(Icons.save),
-                      onPressed: () async {
-                        if (questionProvider.answers.length < 2) {
-                          Scaffold.of(context).showSnackBar(SnackBar(
-                              content: Text('En az 2 tercih eklemelisin')));
-                        } else {
-                          final result = await questionProvider.saveToFirebase(
-                              validation: _validation());
-                          if (result && Navigator.canPop(context)) {
-                            Navigator.pop(context);
-                          }
-                        }
-                      }),
+                      onPressed: !busyState
+                          ? () async {
+                              if (questionProvider.answers.length < 2) {
+                                Scaffold.of(context).showSnackBar(SnackBar(
+                                    content:
+                                        Text('En az 2 tercih eklemelisin')));
+                              } else {
+                                context.read(BusyState.provider).busy();
+
+                                final result = await questionProvider
+                                    .saveToFirebase(validation: _validation());
+
+                                Scaffold.of(context).showSnackBar(SnackBar(
+                                  content: Text('Kaydedildi'),
+                                  backgroundColor: Colors.green,
+                                  duration: Duration(seconds: 1),
+                                ));
+                                await Future.delayed(
+                                    Duration(seconds: 1, milliseconds: 100));
+                                context
+                                    .refresh(Providers.questionsFutureProvider);
+                                context.read(BusyState.provider).notBusy();
+                                if (result && Navigator.canPop(context)) {
+                                  Navigator.pop(context);
+                                }
+                              }
+                            }
+                          : null),
                 ],
               )),
       body: Container(
@@ -72,63 +89,54 @@ class EditQuestionScreen extends HookWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              direction: Axis.horizontal,
               children: [
                 CityPicker(
                     cities: CityModel.cities,
                     initialCity: CityModel.cities.singleWhere(
                         (city) => city == questionProvider.question.city),
                     onChanged: questionProvider.updateCity),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DateTimePicker(
-                      label: "Start Date",
-                      initialDateTime:
-                          questionProvider.question.startDate ?? DateTime.now(),
-                      initialTimeOfDate: TimeOfDay.fromDateTime(questionProvider
-                              .question.startDate
-                              .toDateTime()) ??
-                          TimeOfDay.now(),
-                      onChangedDateTime: questionProvider.updateStartDate,
-                      onChangedTimeOfDay: (timeOfDay) {
-                        final date =
-                            questionProvider.question.startDate.toDateTime();
-                        final pureDate =
-                            DateTime(date.year, date.month, date.day);
-                        final addedTimeOfDay = pureDate.add(Duration(
-                            minutes: timeOfDay.minute, hours: timeOfDay.hour));
-                        questionProvider.updateStartDate(
-                            addedTimeOfDay.millisecondsSinceEpoch);
-                      },
-                    ),
-                    DateTimePicker(
-                      label: "End Date",
-                      initialDateTime:
-                          questionProvider.question.endDate ?? DateTime.now(),
-                      initialTimeOfDate: TimeOfDay.fromDateTime(
-                              questionProvider.question.endDate.toDateTime()) ??
-                          TimeOfDay.now(),
-                      onChangedDateTime: questionProvider.updateEndDate,
-                      onChangedTimeOfDay: (timeOfDay) {
-                        final date =
-                            questionProvider.question.endDate.toDateTime();
-                        final pureDate =
-                            DateTime(date.year, date.month, date.day);
-                        final addedTimeOfDay = pureDate.add(Duration(
-                            minutes: timeOfDay.minute, hours: timeOfDay.hour));
-                        questionProvider.updateEndDate(
-                            addedTimeOfDay.millisecondsSinceEpoch);
-                      },
-                    ),
-                    IsActiveQuestion(
-                      initialValue: questionProvider.question.isActive,
-                      onChanged: (value) =>
-                          questionProvider.updateActive(activate: value),
-                    )
-                  ],
+                DateTimePicker(
+                  label: "Start Date",
+                  initialDateTime:
+                      questionProvider.question.startDate ?? DateTime.now(),
+                  initialTimeOfDate: TimeOfDay.fromDateTime(
+                          questionProvider.question.startDate.toDateTime()) ??
+                      TimeOfDay.now(),
+                  onChangedDateTime: questionProvider.updateStartDate,
+                  onChangedTimeOfDay: (timeOfDay) {
+                    final date =
+                        questionProvider.question.startDate.toDateTime();
+                    final pureDate = DateTime(date.year, date.month, date.day);
+                    final addedTimeOfDay = pureDate.add(Duration(
+                        minutes: timeOfDay.minute, hours: timeOfDay.hour));
+                    questionProvider
+                        .updateStartDate(addedTimeOfDay.millisecondsSinceEpoch);
+                  },
                 ),
+                DateTimePicker(
+                  label: "End Date",
+                  initialDateTime:
+                      questionProvider.question.endDate ?? DateTime.now(),
+                  initialTimeOfDate: TimeOfDay.fromDateTime(
+                          questionProvider.question.endDate.toDateTime()) ??
+                      TimeOfDay.now(),
+                  onChangedDateTime: questionProvider.updateEndDate,
+                  onChangedTimeOfDay: (timeOfDay) {
+                    final date = questionProvider.question.endDate.toDateTime();
+                    final pureDate = DateTime(date.year, date.month, date.day);
+                    final addedTimeOfDay = pureDate.add(Duration(
+                        minutes: timeOfDay.minute, hours: timeOfDay.hour));
+                    questionProvider
+                        .updateEndDate(addedTimeOfDay.millisecondsSinceEpoch);
+                  },
+                ),
+                IsActiveQuestion(
+                  initialValue: questionProvider.question.isActive,
+                  onChanged: (value) =>
+                      questionProvider.updateActive(activate: value),
+                )
               ],
             ),
             HeaderField(

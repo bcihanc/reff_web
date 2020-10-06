@@ -4,9 +4,12 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:reff_shared/core/models/CityModel.dart';
 import 'package:reff_shared/core/models/models.dart';
+import 'package:reff_shared/core/services/question_api.dart';
 import 'package:reff_shared/core/utils/constants.dart';
 import 'package:reff_web/core/models/Unions.dart';
+import 'package:reff_web/core/providers/providers.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
+import 'package:reff_web/core/utils/locator.dart';
 import 'package:reff_web/styles.dart';
 import 'package:reff_web/view/widgets/custom_card.dart';
 import 'package:searchable_dropdown/searchable_dropdown.dart';
@@ -297,6 +300,9 @@ class DateTimePicker extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
+    final date = useState(DateTime.now());
+    final time = useState((TimeOfDay.now()));
+
     return CustomCard(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
@@ -311,6 +317,7 @@ class DateTimePicker extends HookWidget {
                       lastDate: DateTime.now().add(Duration(days: 365))) ??
                   DateTime.now();
 
+              date.value = dateTime;
               onChangedDateTime(dateTime.millisecondsSinceEpoch);
 
               final timeOfDay = await showTimePicker(
@@ -319,10 +326,12 @@ class DateTimePicker extends HookWidget {
                   ) ??
                   TimeOfDay.now();
 
+              time.value = timeOfDay;
               onChangedTimeOfDay(timeOfDay);
             },
             icon: Icon(Icons.date_range),
-            label: Text(label)),
+            label: Text(
+                "$label - ${DateFormat("d.M.yyy").format(date.value)} ${time.value.format(context)}")),
       ),
     );
   }
@@ -472,6 +481,7 @@ class IsActiveQuestion extends HookWidget {
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text('Yayın'),
             Switch(
@@ -514,8 +524,6 @@ class CityPicker extends HookWidget {
 }
 
 class FilterBar extends HookWidget {
-  const FilterBar({Key key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     final _filterChangeNotifier = useProvider(FilterChangeNotifier.provider);
@@ -543,7 +551,7 @@ class FilterBar extends HookWidget {
                     }
                   },
                   label: Text(DateFormat("dd.MM.yyyy")
-                      .format(_filterChangeNotifier.dateTime)))
+                      .format(_filterChangeNotifier.dateTime))),
             ],
           ),
         ),
