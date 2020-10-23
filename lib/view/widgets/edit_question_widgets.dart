@@ -4,12 +4,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:reff_shared/core/models/CityModel.dart';
 import 'package:reff_shared/core/models/models.dart';
-import 'package:reff_shared/core/services/question_api.dart';
 import 'package:reff_shared/core/utils/constants.dart';
 import 'package:reff_web/core/models/Unions.dart';
-import 'package:reff_web/core/providers/providers.dart';
 import 'package:reff_web/core/providers/question_provider.dart';
-import 'package:reff_web/core/utils/locator.dart';
 import 'package:reff_web/styles.dart';
 import 'package:reff_web/view/widgets/custom_card.dart';
 import 'package:searchable_dropdown/searchable_dropdown.dart';
@@ -330,8 +327,8 @@ class DateTimePicker extends HookWidget {
               onChangedTimeOfDay(timeOfDay);
             },
             icon: Icon(Icons.date_range),
-            label: Text(
-                "$label - ${DateFormat("d.M.yyy").format(date.value)} ${time.value.format(context)}")),
+            label: Text("$label - ${DateFormat("d.M.yyy").format(date.value)} "
+                "${time.value.format(context)}")),
       ),
     );
   }

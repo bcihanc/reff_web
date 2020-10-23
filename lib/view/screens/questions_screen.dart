@@ -12,7 +12,6 @@ import 'package:reff_web/styles.dart';
 import 'package:reff_web/view/screens/edit_question_screen.dart';
 import 'package:reff_web/view/screens/result_screen/result_screen.dart';
 import 'package:reff_web/view/widgets/custom_card.dart';
-import 'package:reff_web/view/widgets/edit_question_widgets.dart';
 
 class QuestionsList extends HookWidget {
   const QuestionsList(this.questions);
@@ -156,7 +155,8 @@ class QuestionsScreenFloatingActionButton extends HookWidget {
                   answers: <AnswerModel>[],
                   question: QuestionModel(
                       city: CityModel.cities.first,
-                      header: "",
+                      header: '',
+                      imageUrl: '',
                       startDate: DateTime.now().millisecondsSinceEpoch,
                       endDate: DateTime.now()
                           .add(Duration(days: 2))

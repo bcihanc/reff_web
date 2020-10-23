@@ -3,10 +3,9 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:reff_shared/core/models/models.dart';
 import 'package:reff_shared/core/services/services.dart';
-import 'package:reff_web/core/providers/busy_state_notifier.dart';
-import 'package:reff_web/core/providers/providers.dart';
-import 'package:reff_web/core/utils/locator.dart';
 import 'package:reff_web/core/models/Unions.dart';
+import 'package:reff_web/core/providers/busy_state_notifier.dart';
+import 'package:reff_web/core/utils/locator.dart';
 
 class FilterChangeNotifier extends ChangeNotifier {
   static final provider =
