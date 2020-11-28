@@ -13,28 +13,28 @@ dependencies:
   reff_shared:
     path: ../reff_shared
   state_notifier: ^0.6.0
-  hooks_riverpod: ^0.11.1
-  flutter_hooks: ^0.14.1
-  firebase_core: ^0.5.0
-  firebase_auth: ^0.18.1+1
-  cloud_firestore: ^0.14.1+2
+  hooks_riverpod: ^0.12.1
+  flutter_hooks: ^0.15.0
+  firebase_core: ^0.5.2+1
+  firebase_auth: ^0.18.3+1
+  cloud_firestore: ^0.14.3+1
   logging: ^0.11.4
   future_button: ^0.1.2
   get_it: ^5.0.1
   intl: ^0.16.1
   freezed_annotation: ^0.12.0
   searchable_dropdown: ^1.1.3
-  material_design_icons_flutter: ^4.0.5655
+  material_design_icons_flutter: ^4.0.5755
   flutter_spinkit: ^4.1.2+1
   charts_flutter: ^0.9.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  build_runner: 1.10.1
+  build_runner: ^1.10.6
   json_serializable: ^3.5.0
-  freezed: ^0.12.1
-  effective_dart: ^1.2.4
+  freezed: ^0.12.3
+  effective_dart: ^1.3.0
 
 
 flutter:
